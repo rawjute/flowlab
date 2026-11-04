@@ -14,6 +14,7 @@ Tutto il programma è un unico file (`index.html`): niente login, niente server,
 - Messaggi di errore in italiano pensati per gli studenti (il blocco che sbaglia diventa rosso)
 - Tipi Intero, Reale, Stringa, Booleano e vettori
 - **Copia immagine** negli appunti, download PNG/SVG (anche in bianco e nero per la stampa)
-- Traduzione automatica in **C++, Python, Java e pseudocodice**
-- Salvataggio automatico nel browser e su file (`.json`)
+- **Copia sorgente**: copia negli appunti il programma in formato JSON
+- Traduzione automatica in **JavaScript e pseudocodice**
+- Salvataggio automatico nel browser e su file `.flowlab` (testo JSON)
 - Programmi di esempio e guida integrata

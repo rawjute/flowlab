@@ -45,6 +45,7 @@ code{font-family:Consolas,"Cascadia Mono",Menlo,monospace;font-size:13px;backgro
 .menu button{display:flex;width:100%;align-items:center;gap:10px;border:0;background:none;padding:8px 10px;border-radius:6px;cursor:pointer;text-align:left}
 .menu button:hover{background:#f2f4f9}
 .menu button small{color:var(--muted);margin-left:auto}
+.menu button svg{width:16px;height:16px;flex:none}
 .menu-sep{height:1px;background:var(--line);margin:6px 4px}
 .menu label.check{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;border-radius:6px}
 .menu label.check:hover{background:#f2f4f9}
@@ -167,6 +168,15 @@ dialog::backdrop{background:rgba(15,23,42,.35)}
 .fld small.err:empty{display:none}
 .fld small.help{color:var(--muted);font-size:12px}
 .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.vrow{display:grid;grid-template-columns:1fr 1fr 30px;gap:8px;align-items:center;margin-bottom:6px}
+.vrow .err{grid-column:1/-1;color:var(--danger);font-size:12.5px}
+.vrow .err:empty{display:none}
+.vhead{margin-bottom:0}
+.vhead span{font-weight:600;font-size:13px}
+.vdel{border:0;background:none;font-size:20px;line-height:1;color:var(--muted);cursor:pointer;border-radius:6px;height:34px}
+.vdel:hover{background:#fdecec;color:var(--danger)}
+.addvar{align-self:flex-start;border:1px dashed var(--line2);background:#fff;border-radius:8px;padding:6px 12px;cursor:pointer;color:var(--accent);font-weight:600}
+.addvar:hover{background:var(--accent-soft);border-color:var(--accent)}
 .fld-check{display:flex;align-items:center;gap:8px;margin-bottom:12px;cursor:pointer}
 .cheat{background:#f6f7fb;border-radius:8px;padding:9px 11px;font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px}
 .cheat code{font-size:12px;background:#fff;border:1px solid var(--line)}
@@ -216,6 +226,7 @@ dialog::backdrop{background:rgba(15,23,42,.35)}
   <button class="btn icon" id="btnRedo" title="Ripeti (Ctrl+Y)"><span data-icon="redo"></span></button>
   <div class="spacer"></div>
   <button class="btn primary" id="btnCopyImg" title="Copia il diagramma negli appunti: poi incollalo con Ctrl+V in Word, Classroom, ecc."><span data-icon="copy"></span><span class="lbl">Copia immagine</span></button>
+  <button class="btn" id="btnCopySrc" title="Copia negli appunti il sorgente del programma (il contenuto del file .flowlab)"><span data-icon="code"></span><span class="lbl">Copia sorgente</span></button>
   <div class="menu-wrap">
     <button class="btn" id="btnExport" title="Scarica il diagramma come immagine"><span data-icon="image"></span><span class="lbl">Scarica</span> ▾</button>
     <div class="menu right" id="menuExport">
@@ -266,7 +277,7 @@ dialog::backdrop{background:rgba(15,23,42,.35)}
     <div class="tabpane" id="pane-code">
       <div class="codebar">
         <div class="seg" id="langSeg">
-          <button data-lang="cpp">C++</button><button data-lang="py">Python</button><button data-lang="java">Java</button><button data-lang="ps">Pseudocodice</button>
+          <button data-lang="js">JavaScript</button><button data-lang="ps">Pseudocodice</button>
         </div>
       </div>
       <div class="codebox">
@@ -285,11 +296,6 @@ dialog::backdrop{background:rgba(15,23,42,.35)}
   <form id="editForm" class="dlg" novalidate>
     <div class="dlg-head"><span id="editIcon"></span><div><h2 id="editTitle"></h2><p id="editDesc"></p></div></div>
     <div id="editFields"></div>
-    <div class="cheat" id="editCheat">
-      <b>Operatori:</b> <code>+ - * / %</code> &nbsp; <code>== != &lt; &gt; &lt;= &gt;=</code> &nbsp; <code>&amp;&amp; || !</code> (oppure <code>and or not</code>)<br>
-      <b>Testo</b> tra virgolette: <code>"ciao"</code> · <b>Decimali</b> col punto: <code>3.14</code> · <b>Vero/falso:</b> <code>true</code> <code>false</code> · <b>Vettori:</b> <code>v[i]</code> (si parte da 0)<br>
-      <b>Funzioni:</b> <code>sqrt(x)</code> <code>pow(b,e)</code> <code>abs(x)</code> <code>round(x)</code> <code>int(x)</code> <code>random(a,b)</code> <code>len(s)</code> <code>min(a,b)</code> <code>max(a,b)</code> … (vedi Guida)
-    </div>
     <datalist id="varlist"></datalist>
     <div class="dlg-foot">
       <button type="button" class="btn" id="editCancel">Annulla</button>
@@ -318,8 +324,8 @@ dialog::backdrop{background:rgba(15,23,42,.35)}
     </ul>
     <h3>Blocchi</h3>
     <table>
-      <tr><td><b>Dichiara</b></td><td>Crea variabili: tipo + nomi separati da virgola. Es. <code>a, b, somma = 0</code>. Vettore: <code>v[10]</code> (indici da 0 a 9), anche <code>v[n]</code>.</td></tr>
-      <tr><td><b>Assegna</b></td><td>Calcola un'espressione e la salva: <code>x ← a + b</code>.</td></tr>
+      <tr><td><b>Dichiara</b></td><td>Crea variabili dello stesso tipo: per ognuna scrivi il nome e, se vuoi, il valore iniziale; con <b>+ Aggiungi variabile</b> ne aggiungi un'altra. Vettore: nome <code>v[10]</code> (indici da 0 a 9), anche <code>v[n]</code>.</td></tr>
+      <tr><td><b>Assegna</b></td><td>Calcola un valore e lo salva nella variabile: <code>x = a + b</code>.</td></tr>
       <tr><td><b>Leggi / Scrivi</b></td><td>Input da tastiera / output sulla console. Per unire testo e numeri usa <code>+</code>: <code>"Somma: " + s</code>.</td></tr>
       <tr><td><b>Se</b></td><td>Selezione: ramo <b>V</b> se la condizione è vera, ramo <b>F</b> altrimenti.</td></tr>
       <tr><td><b>Mentre</b></td><td>Ciclo con controllo in testa (while).</td></tr>
@@ -344,8 +350,9 @@ dialog::backdrop{background:rgba(15,23,42,.35)}
     </ul>
     <h3>Salvare e condividere</h3>
     <ul>
-      <li>Il lavoro viene salvato automaticamente in questo browser. Con <b>Salva</b> scarichi un file da riaprire con <b>Apri</b> (o trascinandolo nella pagina).</li>
+      <li>Il lavoro viene salvato automaticamente in questo browser. Con <b>Salva</b> scarichi un file <code>.flowlab</code> da riaprire con <b>Apri</b> (o trascinandolo nella pagina).</li>
       <li><b>Copia immagine</b> mette il diagramma negli appunti: incollalo con <kbd>Ctrl</kbd>+<kbd>V</kbd> in Word, Classroom, e-mail…</li>
+      <li><b>Copia sorgente</b> mette negli appunti il contenuto del file <code>.flowlab</code> (testo JSON).</li>
       <li><b>Scarica</b> salva l'immagine PNG o SVG. L'opzione <b>Bianco e nero</b> è comoda per le verifiche stampate.</li>
     </ul>
     <h3>Scorciatoie</h3>
@@ -357,7 +364,7 @@ dialog::backdrop{background:rgba(15,23,42,.35)}
   </div>
 </dialog>
 
-<input type="file" id="fileInput" accept=".json,application/json" hidden>
+<input type="file" id="fileInput" accept=".flowlab,.json" hidden>
 <div id="toast" class="toast"><span id="toastMsg"></span><button id="toastBtn" hidden></button></div>
 
 <script>
@@ -579,26 +586,38 @@ function splitTop(s) {
   out.push(cur);
   return out;
 }
-function parseDecl(text) {
-  if (!text || !text.trim()) throw new ParseError('Scrivi almeno un nome di variabile');
-  const seen = new Set();
-  return splitTop(text).map(raw => {
-    const it = raw.trim();
-    if (!it) throw new ParseError('C\'è una virgola di troppo');
-    const m = it.match(/^([^\s\[=]+)\s*(?:\[(.*)\])?\s*(?:=\s*([\s\S]*))?$/);
-    if (!m) throw new ParseError(`Dichiarazione non valida: '${it}'. Esempi: x   x = 0   v[10]`);
-    const [, name, size, init] = m;
-    checkName(name);
-    if (seen.has(name)) throw new ParseError(`La variabile '${name}' compare due volte`);
-    seen.add(name);
-    if (size !== undefined && init !== undefined) throw new ParseError('Un vettore non può avere un valore iniziale');
-    return {
-      name,
-      size: size !== undefined ? parseExpr(size) : null, sizeSrc: size,
-      init: init !== undefined ? parseExpr(init) : null, initSrc: init
-    };
+/* il blocco Dichiara contiene una lista di righe { name, value } */
+function declFromText(text) {
+  return splitTop(String(text || '')).map(x => x.trim()).filter(Boolean).map(it => {
+    const m = it.match(/^([^=]*?)\s*(?:=\s*([\s\S]*))?$/);
+    return { name: m[1].trim(), value: (m[2] || '').trim() };
   });
 }
+function parseDeclVar(row) {
+  const n = String(row.name || '').trim(), val = String(row.value || '').trim();
+  if (!n) throw new ParseError('Manca il nome della variabile');
+  const m = n.match(/^([^\s\[]+)\s*(?:\[(.*)\])?$/);
+  if (!m) throw new ParseError(`Nome non valido: '${n}'. Esempi: x oppure v[10] per un vettore`);
+  const [, name, size] = m;
+  checkName(name);
+  if (size !== undefined && val) throw new ParseError('Un vettore non può avere un valore iniziale');
+  return {
+    name,
+    size: size !== undefined ? parseExpr(size) : null, sizeSrc: size,
+    init: val ? parseExpr(val) : null, initSrc: val || undefined
+  };
+}
+function parseDecl(vars) {
+  if (!Array.isArray(vars) || !vars.length) throw new ParseError('Scrivi almeno un nome di variabile');
+  const seen = new Set();
+  return vars.map(row => {
+    const it = parseDeclVar(row);
+    if (seen.has(it.name)) throw new ParseError(`La variabile '${it.name}' compare due volte`);
+    seen.add(it.name);
+    return it;
+  });
+}
+const declRowText = v => v.value && v.value.trim() ? `${v.name} = ${v.value}` : v.name;
 function validateStmt(s) {
   try {
     switch (s.type) {
@@ -917,8 +936,8 @@ function measure(s, bold, italic) {
 }
 function labelParts(s) {
   switch (s.type) {
-    case 'declare': return [{ t: TYPES[s.vtype] + ' ', b: 1 }, { t: s.vars }];
-    case 'assign': return [{ t: s.target }, { t: ' ← ' }, { t: s.expr }];
+    case 'declare': return [{ t: TYPES[s.vtype] + ' ', b: 1 }, { t: s.vars.map(declRowText).join(', ') }];
+    case 'assign': return [{ t: s.target }, { t: ' = ' }, { t: s.expr }];
     case 'input': return [{ t: 'Leggi ', b: 1 }, { t: s.target }];
     case 'output': return [{ t: 'Scrivi ', b: 1 }, { t: s.expr }];
     case 'for': {
@@ -955,9 +974,9 @@ function layoutProgram(program, opt) {
   function text(x, y, s, o = {}) {
     P(`<text x="${r1(x)}" y="${r1(y)}" text-anchor="${o.anchor || 'middle'}" dominant-baseline="central" font-family="${FONT}" font-size="${o.size || FS}"${o.bold ? ' font-weight="600"' : ''}${o.italic ? ' font-style="italic"' : ''} fill="${o.fill || TXT}" xml:space="preserve">${esc(s)}</text>`);
   }
-  function richText(x, y, parts) {
+  function richText(x, y, parts, anchor = 'middle') {
     const inner = parts.map(p => `<tspan${p.b ? ' font-weight="600"' : ''}>${esc(p.t)}</tspan>`).join('');
-    P(`<text x="${r1(x)}" y="${r1(y)}" text-anchor="middle" dominant-baseline="central" font-family="${FONT}" font-size="${FS}" fill="${TXT}" xml:space="preserve">${inner}</text>`);
+    P(`<text x="${r1(x)}" y="${r1(y)}" text-anchor="${anchor}" dominant-baseline="central" font-family="${FONT}" font-size="${FS}" fill="${TXT}" xml:space="preserve">${inner}</text>`);
   }
   function label(t, x, y, anchor) { text(x, y, t, { anchor, size: 12, bold: true, fill: mono ? '#000000' : '#64748b' }); }
   function gOpen(s, err) {
@@ -1009,9 +1028,12 @@ function layoutProgram(program, opt) {
   }
   function laySimple(s, err) {
     const isIO = s.type === 'input' || s.type === 'output', isDecl = s.type === 'declare';
-    const parts = labelParts(s), c = col(s.type);
-    const sk = isIO ? 14 : 0;
-    const w = Math.max(100, partsWidth(parts) + 30 + sk * 2 + (isDecl ? 10 : 0)), h = 40;
+    // Dichiara: una riga per ogni variabile
+    const lines = isDecl ? s.vars.map(v => [{ t: TYPES[s.vtype] + ' ', b: 1 }, { t: declRowText(v) }]) : [labelParts(s)];
+    const c = col(s.type);
+    const sk = isIO ? 14 : 0, LH = 20;
+    const w = Math.max(100, Math.max(...lines.map(partsWidth)) + 30 + sk * 2 + (isDecl ? 10 : 0));
+    const h = Math.max(40, 20 + lines.length * LH);
     return {
       left: w / 2, right: w / 2, h,
       draw(cx, y) {
@@ -1020,7 +1042,10 @@ function layoutProgram(program, opt) {
         if (isIO) P(`<polygon ${A(c)} points="${x + sk},${y} ${x + w},${y} ${x + w - sk},${y + h} ${x},${y + h}"/>`);
         else P(`<rect ${A(c)} x="${x}" y="${y}" width="${w}" height="${h}" rx="${isDecl ? 2 : 6}"/>`);
         if (isDecl) P(`<path d="M${x + 9} ${y}V${y + h}" stroke="${c.s}" stroke-width="1.2" fill="none"/>`);
-        richText(cx + (isDecl ? 5 : 0), y + h / 2, parts);
+        const y0 = y + h / 2 - (lines.length - 1) * LH / 2;
+        lines.forEach((parts, i) => isDecl && lines.length > 1
+          ? richText(x + 22, y0 + i * LH, parts, 'start')
+          : richText(cx + (isDecl ? 5 : 0), y0 + i * LH, parts));
         P('</g>');
       }
     };
@@ -1162,112 +1187,60 @@ function inferType(n, vt) {
 const realLit = v => { const s = String(v); return /[.eE]/.test(s) ? s : s + '.0'; };
 
 /* restituisce [testo, precedenza] — precedenza 10 = atomico */
-function genExprP(src, lang, vt, used) {
+function genExprP(src, lang, vt) {
   let ast;
   if (typeof src === 'string') { try { ast = parseExpr(src); } catch (e) { return [src, 10]; } } else ast = src;
+  const js = lang === 'js';
   const T = n => inferType(n, vt);
   const W = (pair, need) => pair[1] < need ? `(${pair[0]})` : pair[0];
   function g(n) {
     switch (n.k) {
       case 'num': return [n.real ? realLit(n.v) : String(n.v), 10];
       case 'str': return [JSON.stringify(n.v), 10];
-      case 'bool': return [lang === 'py' ? (n.v ? 'True' : 'False') : lang === 'ps' ? (n.v ? 'VERO' : 'FALSO') : String(n.v), 10];
+      case 'bool': return [js ? String(n.v) : (n.v ? 'VERO' : 'FALSO'), 10];
       case 'var': return [n.name, 10];
-      case 'idx': {
-        const i = g(n.index)[0], info = vt.get(n.obj.name);
-        if (info && !info.arr && info.t === 'string') {
-          if (lang === 'java') return [`String.valueOf(${n.obj.name}.charAt(${i}))`, 10];
-          if (lang === 'cpp') return [`string(1, ${n.obj.name}[${i}])`, 10];
-        }
-        return [`${n.obj.name}[${i}]`, 10];
-      }
+      case 'idx': return [`${n.obj.name}[${g(n.index)[0]}]`, 10];
       case 'un': {
         const e = g(n.e);
         if (n.op === '-') { const s = W(e, 8); return ['-' + (s.startsWith('-') ? `(${s})` : s), 8]; }
-        if (lang === 'py') return ['not ' + W(e, 3), 2.5];
-        if (lang === 'ps') return ['NOT ' + W(e, 8), 8];
-        return ['!' + W(e, 8), 8];
+        return [(js ? '!' : 'NOT ') + W(e, 8), 8];
       }
       case 'bin': {
         const P = BIN_PREC[n.op];
-        let l = g(n.l), r = g(n.r);
-        const tl = T(n.l), tr = T(n.r);
-        if (n.op === '+' && (tl === 'string' || tr === 'string')) {
-          if (lang === 'py') {
-            if (tl !== 'string') l = [`str(${l[0]})`, 10];
-            if (tr !== 'string') r = [`str(${r[0]})`, 10];
-          } else if (lang === 'cpp') {
-            if (tl !== 'string') l = [`to_string(${l[0]})`, 10];
-            if (tr !== 'string') r = [`to_string(${r[0]})`, 10];
-            if (n.l.k === 'str' && n.r.k === 'str') l = [`string(${l[0]})`, 10];
+        const l = g(n.l), r = g(n.r);
+        // Intero / Intero dà un intero, come in C e Java
+        if (js && n.op === '/' && T(n.l) === 'int' && T(n.r) === 'int') return [`Math.trunc(${W(l, 6)} / ${W(r, 7)})`, 10];
+        const op = js ? ({ '==': '===', '!=': '!==' }[n.op] || n.op)
+          : ({ '&&': 'AND', '||': 'OR', '==': '=', '!=': '≠', '<=': '≤', '>=': '≥', '%': 'MOD' }[n.op] || n.op);
+        return [`${W(l, P)} ${op} ${W(r, P + 1)}`, P];
+      }
+      case 'call': {
+        const a = n.args.map(x => g(x)[0]), nm = n.name;
+        if (!js) return [`${nm}(${a.join(', ')})`, 10];
+        switch (nm) {
+          case 'int': return [`Math.trunc(${a[0]})`, 10];
+          case 'real': return [`Number(${a[0]})`, 10];
+          case 'len': return [`${W(g(n.args[0]), 10)}.length`, 10];
+          case 'random': {
+            const [x, y] = n.args;
+            const span = x && y && x.k === 'num' && y.k === 'num' ? String(y.v - x.v + 1) : `(${a[1]} - ${W(g(x), 6)} + 1)`;
+            return [`Math.floor(Math.random() * ${span}) + ${W(g(x), 6)}`, 5];
           }
         }
-        if (lang === 'java' && tl === 'string' && tr === 'string' && (n.op === '==' || n.op === '!=')) {
-          const s = `${W(l, 10)}.equals(${r[0]})`;
-          return n.op === '==' ? [s, 10] : ['!' + s, 8];
-        }
-        let op = n.op;
-        let needL = P, needR = P + 1;
-        if (lang === 'py') {
-          op = { '&&': 'and', '||': 'or' }[op] || op;
-          if (op === '/' && tl === 'int' && tr === 'int') op = '//';
-          if (P === 3 || P === 4) { needL = 5; needR = 5; } // evita i confronti concatenati di Python
-        }
-        if (lang === 'ps') op = { '&&': 'AND', '||': 'OR', '==': '=', '!=': '≠', '<=': '≤', '>=': '≥', '%': 'MOD' }[op] || op;
-        return [`${W(l, needL)} ${op} ${W(r, needR)}`, P];
+        return [`Math.${nm}(${a.join(', ')})`, 10];
       }
-      case 'call': return genCall(n);
     }
     return ['?', 10];
-  }
-  // ampiezza dell'intervallo di random(a, b): calcolata subito se a e b sono numeri
-  function randSpan(n, a) {
-    const [x, y] = n.args;
-    if (x && y && x.k === 'num' && y.k === 'num') return String(y.v - x.v + 1);
-    return `(${a[1]} - ${W(g(x), 6)} + 1)`;
-  }
-  function genCall(n) {
-    const a = n.args.map(x => g(x)[0]), nm = n.name;
-    const arrInfo = n.args[0] && n.args[0].k === 'var' ? vt.get(n.args[0].name) : null;
-    if (lang === 'cpp') {
-      switch (nm) {
-        case 'int': return [`int(${a[0]})`, 10];
-        case 'real': return [`double(${a[0]})`, 10];
-        case 'len': if (arrInfo && arrInfo.arr) return [arrInfo.lit != null ? String(arrInfo.lit) : `${a[0]}.size()`, 10]; return [`${W(g(n.args[0]), 10)}.length()`, 10];
-        case 'random': used.random = true; return [`(rand() % ${randSpan(n, a)} + ${a[0]})`, 10];
-      }
-      return [`${nm}(${a.join(', ')})`, 10];
-    }
-    if (lang === 'py') {
-      const M = { sqrt: 'math.sqrt', floor: 'math.floor', ceil: 'math.ceil', sin: 'math.sin', cos: 'math.cos', tan: 'math.tan' };
-      if (M[nm]) { used.math = true; return [`${M[nm]}(${a.join(', ')})`, 10]; }
-      if (nm === 'real') return [`float(${a[0]})`, 10];
-      if (nm === 'random') { used.random = true; return [`random.randint(${a.join(', ')})`, 10]; }
-      return [`${nm}(${a.join(', ')})`, 10];
-    }
-    if (lang === 'java') {
-      switch (nm) {
-        case 'int': return [`(int) ${W(g(n.args[0]), 8)}`, 8];
-        case 'real': return [`(double) ${W(g(n.args[0]), 8)}`, 8];
-        case 'floor': case 'ceil': return [`(int) Math.${nm}(${a[0]})`, 8];
-        case 'round': return [`(int) Math.round(${a[0]})`, 8];
-        case 'len': if (arrInfo && arrInfo.arr) return [`${a[0]}.length`, 10]; return [`${W(g(n.args[0]), 10)}.length()`, 10];
-        case 'random': return [`(int) (Math.random() * ${randSpan(n, a)}) + ${a[0]}`, 5];
-      }
-      return [`Math.${nm}(${a.join(', ')})`, 10];
-    }
-    return [`${nm}(${a.join(', ')})`, 10];
   }
   return g(ast);
 }
 
 function generateCode(program, lang) {
-  const vt = varTypes(program), used = {};
-  const X = src => genExprP(src, lang, vt, used)[0];
+  const js = lang === 'js';
+  const vt = varTypes(program);
+  const X = src => genExprP(src, lang, vt)[0];
   const lines = [];
   const emit = (ind, s) => lines.push('    '.repeat(ind) + s);
-  const CT = lang === 'java' ? { int: 'int', real: 'double', string: 'String', bool: 'boolean' } : { int: 'int', real: 'double', string: 'string', bool: 'bool' };
-  const DEF = { int: '0', real: '0.0', string: '""', bool: lang === 'py' ? 'False' : 'false' };
   const decl = s => { try { return parseDecl(s.vars); } catch (e) { return null; } };
   const isAuto = v => { const i = vt.get(v); return i && i.auto; };
   const stepInfo = s => {
@@ -1276,62 +1249,47 @@ function generateCode(program, lang) {
     try { const a = parseExpr(src); if (a.k === 'num') lit = a.v; else if (a.k === 'un' && a.op === '-' && a.e.k === 'num') lit = -a.e.v; } catch (e) { /* passo non valido */ }
     return { src, lit, neg: lit !== null && lit < 0 };
   };
-  function inputExpr(t) {
-    if (lang === 'py') return { int: 'int(input())', real: 'float(input())', string: 'input()', bool: 'input().strip().lower() in ("vero", "true", "1")' }[t];
-    if (lang === 'java') return { int: 'in.nextInt()', real: 'in.nextDouble()', string: 'in.next()', bool: 'in.nextBoolean()' }[t];
-  }
   const targetType = src => { try { return inferType(parseTarget(src), vt); } catch (e) { return 'string'; } };
-  const commentPrefix = lang === 'py' ? '# ' : lang === 'ps' ? '// ' : '// ';
+  // "Scrivi" senza a capo seguito da "Leggi" diventa il messaggio di prompt()
+  const mergesWithInput = (list, i) => list[i].type === 'output' && list[i].newline === false && list[i + 1] && list[i + 1].type === 'input';
+  // gli altri "Scrivi" senza a capo si accumulano nella variabile riga
+  let usesLine = false;
+  if (js) (function scan(list) {
+    list.forEach((s, i) => {
+      if (s.type === 'output' && s.newline === false && !mergesWithInput(list, i)) usesLine = true;
+      for (const k of CHILD_KEYS) if (s[k]) scan(s[k]);
+    });
+  })(program.main);
+  const PARSE_IN = { int: 'parseInt(%)', real: 'parseFloat(%)', string: '%', bool: '% === "vero"' };
+  const jsInput = (target, msg) => `${X(target)} = ${PARSE_IN[targetType(target)].replace('%', `prompt(${msg})`)};`;
 
   function block(list, ind) {
-    if (lang === 'py' && !list.some(s => s.type !== 'comment')) { list.forEach(s => one(s, ind)); emit(ind, 'pass'); return; }
-    list.forEach(s => one(s, ind));
+    for (let i = 0; i < list.length; i++) {
+      if (js && mergesWithInput(list, i)) { emit(ind, jsInput(list[i + 1].target, X(list[i].expr))); i++; continue; }
+      const s = list[i];
+      if (s.type === 'comment') (s.text || '').split('\n').forEach(l => emit(ind, '// ' + l));
+      else if (js) oneJs(s, ind);
+      else onePs(s, ind);
+    }
   }
-  function one(s, ind) {
-    if (s.type === 'comment') { (s.text || '').split('\n').forEach(l => emit(ind, commentPrefix + l)); return; }
-    if (lang === 'ps') return onePs(s, ind);
-    if (lang === 'py') return onePy(s, ind);
-    return oneC(s, ind);
-  }
-  // C++ e Java (sintassi simile)
-  function oneC(s, ind) {
-    const java = lang === 'java';
+  function oneJs(s, ind) {
     switch (s.type) {
       case 'declare': {
         const items = decl(s);
-        if (!items) { emit(ind, `// ERRORE nella dichiarazione: ${TYPES[s.vtype]} ${s.vars}`); return; }
-        const ct = CT[s.vtype];
-        if (java) {
-          for (const it of items) {
-            if (it.size) emit(ind, `${ct}[] ${it.name} = new ${ct}[${X(it.size)}];`);
-            else emit(ind, `${ct} ${it.name}${it.init ? ' = ' + X(it.init) : ''};`);
-          }
-          return;
-        }
-        let plain = [];
-        const flush = () => { if (plain.length) emit(ind, `${ct} ${plain.join(', ')};`); plain = []; };
+        if (!items) { emit(ind, `// ERRORE nella dichiarazione: ${TYPES[s.vtype]} ${s.vars.map(declRowText).join(', ')}`); return; }
         for (const it of items) {
-          if (it.size && it.size.k !== 'num') { flush(); used.vector = true; emit(ind, `vector<${ct}> ${it.name}(${X(it.size)});`); }
-          else if (it.size) plain.push(`${it.name}[${it.size.v}]`);
-          else plain.push(it.init ? `${it.name} = ${X(it.init)}` : it.name);
+          if (it.size) emit(ind, `let ${it.name} = new Array(${X(it.size)});  // vettore di ${TYPES[s.vtype]}`);
+          else emit(ind, `let ${it.name}${it.init ? ' = ' + X(it.init) : ''};  // ${TYPES[s.vtype]}`);
         }
-        flush();
         return;
       }
       case 'assign': emit(ind, `${X(s.target)} = ${X(s.expr)};`); return;
-      case 'input':
-        if (java) { used.input = true; emit(ind, `${X(s.target)} = ${inputExpr(targetType(s.target))};`); }
-        else emit(ind, `cin >> ${X(s.target)};`);
-        return;
+      case 'input': emit(ind, jsInput(s.target, JSON.stringify('Inserisci ' + s.target))); return;
       case 'output': {
-        if (java) { emit(ind, `System.out.${s.newline !== false ? 'println' : 'print'}(${X(s.expr)});`); return; }
-        let pieces;
-        try {
-          const ast = parseExpr(s.expr);
-          const flat = n => n.k === 'bin' && n.op === '+' && inferType(n, vt) === 'string' ? [...flat(n.l), ...flat(n.r)] : [n];
-          pieces = flat(ast).map(p => { const [t, pr] = genExprP(p, lang, vt, used); return pr <= 4 ? `(${t})` : t; });
-        } catch (e) { pieces = [s.expr]; }
-        emit(ind, `cout << ${pieces.join(' << ')}${s.newline !== false ? ' << endl' : ''};`);
+        if (!usesLine) { emit(ind, `console.log(${X(s.expr)});`); return; }
+        if (s.newline === false) { emit(ind, `riga += ${X(s.expr)};`); return; }
+        emit(ind, `console.log(riga + ${genExprP(s.expr, lang, vt)[1] < 6 ? '(' + X(s.expr) + ')' : X(s.expr)});`);
+        emit(ind, 'riga = "";');
         return;
       }
       case 'if':
@@ -1343,54 +1301,11 @@ function generateCode(program, lang) {
       case 'dowhile': emit(ind, 'do {'); block(s.body, ind + 1); emit(ind, `} while (${X(s.cond)});`); return;
       case 'for': {
         const st = stepInfo(s), v = s.var;
-        const init = `${isAuto(v) ? 'int ' : ''}${v} = ${X(s.from)}`;
-        const condOp = st.neg ? '>=' : '<=';
+        const init = `${isAuto(v) ? 'let ' : ''}${v} = ${X(s.from)}`;
         const inc = st.lit === 1 ? `${v}++` : st.lit === -1 ? `${v}--` : st.neg ? `${v} -= ${-st.lit}` : `${v} += ${X(st.src)}`;
-        emit(ind, `for (${init}; ${v} ${condOp} ${X(s.to)}; ${inc}) {`);
+        emit(ind, `for (${init}; ${v} ${st.neg ? '>=' : '<='} ${X(s.to)}; ${inc}) {`);
         block(s.body, ind + 1);
         emit(ind, '}');
-        return;
-      }
-    }
-  }
-  function onePy(s, ind) {
-    switch (s.type) {
-      case 'declare': {
-        const items = decl(s);
-        if (!items) { emit(ind, `# ERRORE nella dichiarazione: ${TYPES[s.vtype]} ${s.vars}`); return; }
-        for (const it of items) {
-          if (it.size) { const sz = genExprP(it.size, lang, vt, used); emit(ind, `${it.name} = [${DEF[s.vtype]}] * ${sz[1] < 6 ? '(' + sz[0] + ')' : sz[0]}  # vettore di ${TYPES[s.vtype]}`); }
-          else {
-            const init = !it.init ? DEF[s.vtype] : s.vtype === 'real' && it.init.k === 'num' ? realLit(it.init.v) : X(it.init);
-            emit(ind, `${it.name} = ${init}  # ${TYPES[s.vtype]}`);
-          }
-        }
-        return;
-      }
-      case 'assign': emit(ind, `${X(s.target)} = ${X(s.expr)}`); return;
-      case 'input': emit(ind, `${X(s.target)} = ${inputExpr(targetType(s.target))}`); return;
-      case 'output': emit(ind, `print(${X(s.expr)}${s.newline !== false ? '' : ', end=""'})`); return;
-      case 'if':
-        emit(ind, `if ${X(s.cond)}:`); block(s.yes, ind + 1);
-        if (s.no.length) { emit(ind, 'else:'); block(s.no, ind + 1); }
-        return;
-      case 'while': emit(ind, `while ${X(s.cond)}:`); block(s.body, ind + 1); return;
-      case 'dowhile':
-        emit(ind, 'while True:'); block(s.body, ind + 1);
-        emit(ind + 1, `if not (${X(s.cond)}):`); emit(ind + 2, 'break');
-        return;
-      case 'for': {
-        const st = stepInfo(s);
-        let end;
-        try {
-          const a = parseExpr(s.to);
-          if (a.k === 'num' && !a.real) end = String(a.v + (st.neg ? -1 : 1));
-          else if (a.k === 'bin' && a.op === (st.neg ? '+' : '-') && a.r.k === 'num' && a.r.v === 1 && !a.r.real) end = X(a.l);
-          else end = `${genExprP(a, lang, vt, used)[1] < 5 ? '(' + X(a) + ')' : X(a)} ${st.neg ? '-' : '+'} 1`;
-        } catch (e) { end = s.to; }
-        const args = st.lit === 1 ? `${X(s.from)}, ${end}` : `${X(s.from)}, ${end}, ${X(st.src)}`;
-        emit(ind, `for ${s.var} in range(${args}):`);
-        block(s.body, ind + 1);
         return;
       }
     }
@@ -1398,9 +1313,9 @@ function generateCode(program, lang) {
   function onePs(s, ind) {
     switch (s.type) {
       case 'declare': {
-        const items = decl(s);
-        if (!items) { emit(ind, `${TYPES[s.vtype].toUpperCase()} ${s.vars}`); return; }
-        emit(ind, `${TYPES[s.vtype].toUpperCase()} ${items.map(it => it.size ? `${it.name}[${X(it.size)}]` : it.init ? `${it.name} ← ${X(it.init)}` : it.name).join(', ')}`);
+        const items = decl(s), T = TYPES[s.vtype].toUpperCase();
+        if (!items) { s.vars.forEach(v => emit(ind, `${T} ${declRowText(v)}`)); return; }
+        items.forEach(it => emit(ind, `${T} ${it.size ? `${it.name}[${X(it.size)}]` : it.init ? `${it.name} ← ${X(it.init)}` : it.name}`));
         return;
       }
       case 'assign': emit(ind, `${X(s.target)} ← ${X(s.expr)}`); return;
@@ -1424,36 +1339,18 @@ function generateCode(program, lang) {
   }
 
   const title = program.name || 'Programma';
-  if (lang === 'cpp') {
-    block(program.main, 1);
-    const body = lines.splice(0);
-    const inc = ['#include <iostream>', '#include <string>', '#include <cmath>'];
-    if (used.vector) inc.push('#include <vector>');
-    if (used.random) inc.push('#include <cstdlib>', '#include <ctime>');
-    return [`// ${title}`, ...inc, 'using namespace std;', '', 'int main() {',
-      ...(used.random ? ['    srand(time(0));'] : []), ...body, '    return 0;', '}'].join('\n');
-  }
-  if (lang === 'java') {
-    block(program.main, 2);
-    const body = lines.splice(0);
-    return [`// ${title}`, ...(used.input ? ['import java.util.Scanner;', ''] : []), 'public class Main {', '    public static void main(String[] args) {',
-      ...(used.input ? ['        Scanner in = new Scanner(System.in);'] : []), ...body, '    }', '}'].join('\n');
-  }
-  if (lang === 'py') {
+  if (js) {
     block(program.main, 0);
-    const body = lines.splice(0);
-    const imp = [];
-    if (used.math) imp.push('import math');
-    if (used.random) imp.push('import random');
-    return [`# ${title}`, ...imp, ...(imp.length ? [''] : []), ...(body.length ? body : ['pass'])].join('\n');
+    const head = [`// ${title}`, '// Da eseguire nella console del browser (F12): prompt() legge i dati, console.log() li scrive', ''];
+    if (usesLine) head.push('let riga = "";  // testo scritto senza andare a capo', '');
+    const tail = usesLine ? ['if (riga !== "") console.log(riga);'] : [];
+    return [...head, ...lines, ...tail].join('\n');
   }
   block(program.main, 1);
   return [`// ${title}`, 'INIZIO', ...lines, 'FINE'].join('\n');
 }
 const KEYWORDS = {
-  cpp: 'int double string bool if else while do for return using namespace include true false cout cin endl vector void main',
-  java: 'int double String boolean if else while do for return import public class static void new true false',
-  py: 'if else elif while for in range import and or not True False break pass print input',
+  js: 'let const if else while do for return true false new',
   ps: 'INIZIO FINE SE ALLORA ALTRIMENTI MENTRE ESEGUI PER DA A PASSO LEGGI SCRIVI AND OR NOT MOD VERO FALSO INTERO REALE STRINGA BOOLEANO'
 };
 function highlight(code, lang) {
@@ -1468,7 +1365,7 @@ function highlight(code, lang) {
    ===================================================================== */
 const BLOCKS = [
   { type: 'declare', name: 'Dichiara', d: 'Crea variabili', desc: 'Crea una o più variabili di un certo tipo.' },
-  { type: 'assign', name: 'Assegna', d: 'x ← espressione', desc: 'Calcola un valore e lo mette in una variabile.' },
+  { type: 'assign', name: 'Assegna', d: 'x = valore', desc: 'Calcola un valore e lo mette in una variabile.' },
   { type: 'input', name: 'Leggi', d: 'Input da tastiera', desc: "Chiede all'utente un valore e lo salva nella variabile." },
   { type: 'output', name: 'Scrivi', d: 'Output a video', desc: 'Mostra un messaggio o un valore sulla console.' },
   { type: 'if', name: 'Se', d: 'Selezione (if)', desc: 'Se la condizione è vera esegue il ramo V, altrimenti il ramo F.' },
@@ -1494,7 +1391,7 @@ function miniIcon(type, cls = 'mini') {
 function newStmt(type) {
   const s = { id: newId(), type };
   switch (type) {
-    case 'declare': Object.assign(s, { vtype: 'int', vars: '' }); break;
+    case 'declare': Object.assign(s, { vtype: 'int', vars: [{ name: '', value: '' }] }); break;
     case 'assign': Object.assign(s, { target: '', expr: '' }); break;
     case 'input': Object.assign(s, { target: '' }); break;
     case 'output': Object.assign(s, { expr: '', newline: true }); break;
@@ -1512,6 +1409,12 @@ function normalizeList(list) {
     for (const k of Object.keys(n)) {
       if (k === 'id' || k === 'type') continue;
       if (CHILD_KEYS.includes(k)) n[k] = normalizeList(s[k]);
+      else if (k === 'vars') {
+        // accetta anche il vecchio formato "a, b = 0"
+        const rows = typeof s.vars === 'string' ? declFromText(s.vars) : Array.isArray(s.vars) ? s.vars : [];
+        n.vars = rows.filter(r => r && typeof r === 'object').map(r => ({ name: String(r.name ?? '').trim(), value: String(r.value ?? '').trim() }));
+        if (!n.vars.length) n.vars = [{ name: '', value: '' }];
+      }
       else if (typeof n[k] === 'boolean') n[k] = s[k] !== undefined ? !!s[k] : n[k];
       else if (s[k] !== undefined && s[k] !== null) n[k] = String(s[k]);
     }
@@ -1549,8 +1452,9 @@ let bounds = { x: -60, y: 0, w: 120, h: 200 };
 let plusPts = [], plusEls = [];
 const undoStack = [], redoStack = [];
 const view = { x: 0, y: 0, k: 1 };
-const settings = Object.assign({ mono: false, speed: 4, lang: 'cpp' }, (() => { try { return JSON.parse(LS.get(SETTINGS_KEY)) || {}; } catch (e) { return {}; } })());
+const settings = Object.assign({ mono: false, speed: 4, lang: 'js' }, (() => { try { return JSON.parse(LS.get(SETTINGS_KEY)) || {}; } catch (e) { return {}; } })());
 const saveSettings = () => LS.set(SETTINGS_KEY, JSON.stringify(settings));
+if (!['js', 'ps'].includes(settings.lang)) settings.lang = 'js';
 try { const c = JSON.parse(LS.get(CLIP_KEY)); if (c && BINFO[c.type]) clip = normalizeList([c])[0]; } catch (e) { /* nessun appunto */ }
 try {
   const saved = JSON.parse(LS.get(STORE_KEY));
@@ -1805,15 +1709,17 @@ function endPointer(e, cancelled) {
   if (p.mode === 'plus' && !p.moved && !cancelled) openPalette(p.el);
   else if (p.mode === 'blk') {
     if (drag) endDrag(e, cancelled);
-    else if (!cancelled) select(p.id);
+    else if (!cancelled) {
+      // doppio clic riconosciuto a mano: con il pointer capture l'evento dblclick non arriva al blocco
+      const now = performance.now();
+      if (lastClick.id === p.id && now - lastClick.t < 450) { lastClick = { id: null, t: 0 }; editStmt(p.id); }
+      else { lastClick = { id: p.id, t: now }; select(p.id); }
+    }
   } else if (p.mode === 'pan' && !p.moved && !cancelled) select(null);
 }
+let lastClick = { id: null, t: 0 };
 svg.addEventListener('pointerup', e => endPointer(e, false));
 svg.addEventListener('pointercancel', e => endPointer(e, true));
-svg.addEventListener('dblclick', e => {
-  const b = e.target.closest('.blk');
-  if (b && !b.classList.contains('term')) editStmt(b.dataset.id);
-});
 svg.addEventListener('wheel', e => {
   e.preventDefault();
   const m = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 400 : 1;
@@ -1915,19 +1821,19 @@ selbar.addEventListener('click', e => {
 /* =====================================================================
    FINESTRA DI MODIFICA DEI BLOCCHI
    ===================================================================== */
-const COND_FIELD = { k: 'cond', label: 'Condizione', ph: 'es.  x > 0 && x < 10', check: parseExpr, help: 'Un confronto che risulta vero o falso.' };
+const COND_FIELD = { k: 'cond', label: 'Condizione', ph: 'es.  x > 0 && x < 10', check: parseExpr };
 const FIELDS = {
   declare: [
     { k: 'vtype', label: 'Tipo', type: 'select' },
-    { k: 'vars', label: 'Variabili', ph: 'es.  a, b, somma = 0, v[10]', check: parseDecl, help: 'Separa i nomi con la virgola. Valore iniziale: x = 0 · Vettore: v[10]' }
+    { k: 'vars', label: 'Variabili', type: 'vars' }
   ],
   assign: [
     { k: 'target', label: 'Variabile', ph: 'es.  x   oppure   v[i]', check: parseTarget, list: true },
-    { k: 'expr', label: 'Espressione', ph: 'es.  (a + b) / 2', check: parseExpr }
+    { k: 'expr', label: 'Valore', ph: 'es.  (a + b) / 2', check: parseExpr }
   ],
-  input: [{ k: 'target', label: 'Variabile in cui salvare il valore letto', ph: 'es.  x   oppure   v[i]', check: parseTarget, list: true }],
+  input: [{ k: 'target', label: 'Variabile da leggere', ph: 'es.  x   oppure   v[i]', check: parseTarget, list: true }],
   output: [
-    { k: 'expr', label: 'Cosa scrivere', ph: 'es.  "Risultato: " + x', check: parseExpr, help: 'Il testo va tra virgolette; unisci testo e valori con +' },
+    { k: 'expr', label: 'Cosa scrivere', ph: 'es.  "Risultato: " + x', check: parseExpr },
     { k: 'newline', label: 'Vai a capo dopo la scritta', type: 'checkbox' }
   ],
   if: [COND_FIELD], while: [COND_FIELD], dowhile: [COND_FIELD],
@@ -1949,7 +1855,8 @@ function fieldHTML(f) {
   if (f.type === 'select') return `<label class="fld"><span>${f.label}</span><select name="${f.k}">${Object.entries(TYPES).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>`;
   if (f.type === 'checkbox') return `<label class="fld-check"><input type="checkbox" name="${f.k}"> ${f.label}</label>`;
   if (f.type === 'textarea') return `<label class="fld"><span>${f.label}</span><textarea name="${f.k}" rows="3"></textarea><small class="err" data-err="${f.k}"></small></label>`;
-  return `<label class="fld"><span>${f.label}</span><input name="${f.k}" type="text" autocomplete="off" spellcheck="false" placeholder="${esc(f.ph || '')}"${f.list ? ' list="varlist"' : ''}><small class="err" data-err="${f.k}"></small>${f.help ? `<small class="help">${f.help}</small>` : ''}</label>`;
+  if (f.type === 'vars') return `<div class="fld"><div class="vrow vhead"><span>Nome</span><span>Valore iniziale</span></div><div id="varRows"></div><button type="button" class="addvar" id="addVar" title="Aggiungi un'altra variabile dello stesso tipo">+ Aggiungi variabile</button></div>`;
+  return `<label class="fld"><span>${f.label}</span><input name="${f.k}" type="text" autocomplete="off" spellcheck="false" placeholder="${esc(f.ph || '')}"${f.list ? ' list="varlist"' : ''}><small class="err" data-err="${f.k}"></small></label>`;
 }
 function checkField(f, v) {
   if (!v.trim()) return f.optional ? '' : (f.type === 'textarea' ? 'Scrivi il testo del commento' : 'Questo campo è obbligatorio');
@@ -1959,6 +1866,43 @@ function showFieldErr(k, msg) {
   const el = editForm.querySelector(`[data-err="${k}"]`); if (el) el.textContent = msg;
   const inp = editForm.elements[k]; if (inp && inp.classList) inp.classList.toggle('bad', !!msg);
 }
+
+/* ---------- righe del blocco Dichiara ---------- */
+const varRowEls = () => [...editForm.querySelectorAll('#varRows .vrow')];
+function checkVarRow(row) {
+  const name = row.querySelector('.vname'), val = row.querySelector('.vval');
+  let nameErr = '', valErr = '';
+  if (name.value.trim() || val.value.trim()) {
+    try { parseDeclVar({ name: name.value, value: '' }); } catch (e) { nameErr = e.message; }
+    if (!nameErr) try { parseDeclVar({ name: name.value, value: val.value }); } catch (e) { valErr = e.message; }
+  }
+  row.querySelector('.err').textContent = nameErr || valErr;
+  name.classList.toggle('bad', !!nameErr);
+  val.classList.toggle('bad', !!valErr);
+  return nameErr || valErr;
+}
+function addVarRow(v = { name: '', value: '' }, focus = false) {
+  const row = document.createElement('div');
+  row.className = 'vrow';
+  row.innerHTML = `<input class="vname" type="text" autocomplete="off" spellcheck="false" placeholder="es.  somma"><input class="vval" type="text" autocomplete="off" spellcheck="false" placeholder="facoltativo"><button type="button" class="vdel" title="Rimuovi questa variabile">×</button><small class="err"></small>`;
+  row.querySelector('.vname').value = v.name;
+  row.querySelector('.vval').value = v.value;
+  row.addEventListener('input', () => checkVarRow(row));
+  row.querySelector('.vdel').addEventListener('click', () => {
+    row.remove();
+    if (!varRowEls().length) addVarRow({ name: '', value: '' }, true);
+    updateVarRows();
+  });
+  $('#varRows').appendChild(row);
+  updateVarRows();
+  if (focus) row.querySelector('.vname').focus();
+  return row;
+}
+function updateVarRows() {
+  const rows = varRowEls();
+  rows.forEach(r => { r.querySelector('.vdel').style.visibility = rows.length > 1 ? '' : 'hidden'; });
+}
+
 function openEditor(stmt, isNew, target) {
   editing = { stmt, isNew, target };
   const spec = FIELDS[stmt.type], info = BINFO[stmt.type];
@@ -1967,20 +1911,24 @@ function openEditor(stmt, isNew, target) {
   $('#editDesc').textContent = info.desc;
   $('#editOk').textContent = isNew ? 'Inserisci' : 'Salva';
   $('#editFields').innerHTML = spec.map(fieldHTML).join('');
-  $('#editCheat').style.display = stmt.type === 'comment' ? 'none' : '';
   $('#varlist').innerHTML = [...varTypes(prog).keys()].map(n => `<option value="${esc(n)}">`).join('');
   for (const f of flatFields(spec)) {
+    if (f.type === 'vars') {
+      stmt.vars.forEach(v => { const r = addVarRow(v); if (!isNew) checkVarRow(r); });
+      $('#addVar').addEventListener('click', () => addVarRow({ name: '', value: '' }, true));
+      continue;
+    }
     const el = editForm.elements[f.k];
     if (f.type === 'checkbox') el.checked = stmt[f.k] !== false;
     else el.value = stmt[f.k] != null ? stmt[f.k] : '';
     if (!f.type || f.type === 'textarea') {
-      el.addEventListener('input', () => { el.dataset.touched = '1'; showFieldErr(f.k, checkField(f, el.value)); });
+      el.addEventListener('input', () => showFieldErr(f.k, checkField(f, el.value)));
       if (!isNew) showFieldErr(f.k, checkField(f, el.value));
     }
   }
   dlgEdit.showModal();
-  const first = flatFields(spec).find(f => !f.type || f.type === 'textarea' || f.type === 'select');
-  const target0 = stmt.type === 'declare' ? editForm.elements.vars : first && editForm.elements[first.k];
+  const first = flatFields(spec).find(f => !f.type || f.type === 'textarea');
+  const target0 = stmt.type === 'declare' ? editForm.querySelector('.vname') : first && editForm.elements[first.k];
   if (target0) { target0.focus(); if (target0.select && !isNew) target0.select(); }
 }
 function editStmt(id) {
@@ -1995,6 +1943,25 @@ editForm.addEventListener('submit', e => {
   const vals = {};
   let firstBad = null;
   for (const f of flatFields(FIELDS[stmt.type])) {
+    if (f.type === 'vars') {
+      // le righe lasciate vuote vengono ignorate
+      const rows = varRowEls().filter(r => r.querySelector('.vname').value.trim() || r.querySelector('.vval').value.trim());
+      const seen = new Set();
+      for (const r of rows) {
+        let msg = checkVarRow(r);
+        const name = r.querySelector('.vname').value.trim().replace(/\s*\[.*$/, '');
+        if (!msg && seen.has(name)) { msg = `La variabile '${name}' compare due volte`; r.querySelector('.err').textContent = msg; }
+        seen.add(name);
+        if (msg && !firstBad) firstBad = r.querySelector('.vname');
+      }
+      if (!rows.length) {
+        const r = varRowEls()[0];
+        r.querySelector('.err').textContent = 'Scrivi il nome di almeno una variabile';
+        firstBad = firstBad || r.querySelector('.vname');
+      }
+      vals.vars = rows.map(r => ({ name: r.querySelector('.vname').value.trim(), value: r.querySelector('.vval').value.trim() }));
+      continue;
+    }
     const el = editForm.elements[f.k];
     if (f.type === 'checkbox') { vals[f.k] = el.checked; continue; }
     if (f.type === 'select') { vals[f.k] = el.value; continue; }
@@ -2216,7 +2183,7 @@ showSpeed();
 /* =====================================================================
    CODICE
    ===================================================================== */
-const EXT = { cpp: 'cpp', py: 'py', java: 'java', ps: 'txt' };
+const EXT = { js: 'js', ps: 'txt' };
 function codeVisible() { return $('#pane-code').classList.contains('active'); }
 function updateCode() {
   if (!codeVisible()) return;
@@ -2242,7 +2209,7 @@ $('#btnCopyCode').addEventListener('click', async () => {
   toast(ok ? 'Codice copiato negli appunti ✓' : 'Impossibile copiare: seleziona il testo e usa Ctrl+C');
 });
 $('#btnDlCode').addEventListener('click', () => {
-  const name = settings.lang === 'java' ? 'Main' : fileBase();
+  const name = fileBase();
   download(new Blob([generateCode(prog, settings.lang)], { type: 'text/plain;charset=utf-8' }), `${name}.${EXT[settings.lang]}`);
 });
 
@@ -2306,17 +2273,22 @@ const optMono = $('#optMono');
 optMono.checked = settings.mono;
 optMono.addEventListener('change', () => { settings.mono = optMono.checked; saveSettings(); toast(settings.mono ? 'Le immagini saranno in bianco e nero' : 'Le immagini saranno a colori'); });
 
+const sourceText = () => JSON.stringify(prog, null, 2);
 function saveFile() {
-  download(new Blob([JSON.stringify(prog, null, 2)], { type: 'application/json' }), fileBase() + '.json');
+  download(new Blob([sourceText()], { type: 'application/json' }), fileBase() + '.flowlab');
   toast('Programma salvato nella cartella Download');
 }
+$('#btnCopySrc').addEventListener('click', async () => {
+  const ok = await copyText(sourceText());
+  toast(ok ? 'Sorgente copiato negli appunti ✓' : 'Impossibile copiare il sorgente');
+});
 function openFile(file) {
   const fr = new FileReader();
   fr.onload = () => {
     try {
       const data = JSON.parse(fr.result);
       if (!data || !Array.isArray(data.main)) throw new Error('formato');
-      loadProgram(mkProgram(String(data.name || file.name.replace(/\.json$/i, '')), data.main), `Aperto "${data.name || file.name}"`);
+      loadProgram(mkProgram(String(data.name || file.name.replace(/\.(flowlab|json)$/i, '')), data.main), `Aperto "${data.name || file.name}"`);
     } catch (e) { toast('Questo file non è un programma FlowLab valido'); }
   };
   fr.readAsText(file);
