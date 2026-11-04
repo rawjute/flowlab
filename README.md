@@ -17,4 +17,4 @@ Tutto il programma è un unico file (`index.html`): niente login, niente server,
 - **Copia sorgente**: copia negli appunti il programma in formato JSON
 - Traduzione automatica in **JavaScript e pseudocodice**
 - Salvataggio automatico nel browser e su file `.flowlab` (testo JSON)
-- Programmi di esempio e guida integrata
+- Guida integrata
