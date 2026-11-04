@@ -328,9 +328,9 @@ dialog::backdrop{background:rgba(15,23,42,.35)}
       <tr><td><b>Assegna</b></td><td>Calcola un valore e lo salva nella variabile: <code>x = a + b</code>.</td></tr>
       <tr><td><b>Leggi / Scrivi</b></td><td>Input da tastiera / output sulla console. Per unire testo e numeri usa <code>+</code>: <code>"Somma: " + s</code>.</td></tr>
       <tr><td><b>Se</b></td><td>Selezione: ramo <b>V</b> se la condizione è vera, ramo <b>F</b> altrimenti.</td></tr>
-      <tr><td><b>Mentre</b></td><td>Ciclo con controllo in testa (while).</td></tr>
-      <tr><td><b>Fai… mentre</b></td><td>Ciclo con controllo in coda (do-while): il corpo viene eseguito almeno una volta.</td></tr>
-      <tr><td><b>Per</b></td><td>Ciclo con contatore (for): da… a… (estremo incluso), con passo anche negativo.</td></tr>
+      <tr><td><b>While</b></td><td>Ciclo con controllo in testa: ripete finché la condizione è vera.</td></tr>
+      <tr><td><b>Do while</b></td><td>Ciclo con controllo in coda: il corpo viene eseguito almeno una volta.</td></tr>
+      <tr><td><b>For</b></td><td>Ciclo con contatore: da… a… (estremo incluso), con passo anche negativo.</td></tr>
     </table>
     <h3>Tipi</h3>
     <p style="margin:4px 0"><b>Intero</b> (5), <b>Reale</b> (3.14), <b>Stringa</b> ("ciao"), <b>Booleano</b> (true/false). Attenzione: come in C/C++/Java, <code>Intero / Intero</code> dà un risultato intero (7 / 2 = 3). Per avere 3.5 usa <code>real(7) / 2</code> oppure <code>7.0 / 2</code>.</p>
@@ -941,7 +941,7 @@ function labelParts(s) {
     case 'input': return [{ t: 'Leggi ', b: 1 }, { t: s.target }];
     case 'output': return [{ t: 'Scrivi ', b: 1 }, { t: s.expr }];
     case 'for': {
-      const p = [{ t: 'Per ', b: 1 }, { t: s.var }, { t: ' da ', b: 1 }, { t: s.from }, { t: ' a ', b: 1 }, { t: s.to }];
+      const p = [{ t: 'for ', b: 1 }, { t: s.var }, { t: ' da ', b: 1 }, { t: s.from }, { t: ' a ', b: 1 }, { t: s.to }];
       if (s.step && s.step.trim() !== '1') p.push({ t: ' passo ', b: 1 }, { t: s.step });
       return p;
     }
@@ -1369,9 +1369,9 @@ const BLOCKS = [
   { type: 'input', name: 'Leggi', d: 'Input da tastiera', desc: "Chiede all'utente un valore e lo salva nella variabile." },
   { type: 'output', name: 'Scrivi', d: 'Output a video', desc: 'Mostra un messaggio o un valore sulla console.' },
   { type: 'if', name: 'Se', d: 'Selezione (if)', desc: 'Se la condizione è vera esegue il ramo V, altrimenti il ramo F.' },
-  { type: 'while', name: 'Mentre', d: 'Ciclo while', desc: 'Ripete i blocchi finché la condizione è vera (controllo in testa).' },
-  { type: 'dowhile', name: 'Fai… mentre', d: 'Ciclo do-while', desc: 'Esegue i blocchi e li ripete finché la condizione è vera (controllo in coda).' },
-  { type: 'for', name: 'Per', d: 'Ciclo for', desc: 'Ripete i blocchi facendo variare un contatore da un valore iniziale a uno finale (incluso).' },
+  { type: 'while', name: 'While', d: 'Controllo in testa', desc: 'Ripete i blocchi finché la condizione è vera (controllo in testa).' },
+  { type: 'dowhile', name: 'Do while', d: 'Controllo in coda', desc: 'Esegue i blocchi e li ripete finché la condizione è vera (controllo in coda).' },
+  { type: 'for', name: 'For', d: 'Ciclo con contatore', desc: 'Ripete i blocchi facendo variare un contatore da un valore iniziale a uno finale (incluso).' },
   { type: 'comment', name: 'Commento', d: 'Nota esplicativa', desc: 'Una nota per spiegare il programma. Non viene eseguita.' }
 ];
 const BINFO = Object.fromEntries(BLOCKS.map(b => [b.type, b]));
@@ -1437,11 +1437,11 @@ const EXAMPLES = [
   { name: 'Somma di due numeri', main: [D('int', 'a, b, somma'), OUT('"Primo numero: "', false), IN('a'), OUT('"Secondo numero: "', false), IN('b'), AS('somma', 'a + b'), OUT('"La somma è " + somma')] },
   { name: 'Pari o dispari', main: [D('int', 'n'), OUT('"Inserisci un numero: "', false), IN('n'), IF('n % 2 == 0', [OUT('n + " è pari"')], [OUT('n + " è dispari"')])] },
   { name: 'Massimo tra tre numeri', main: [D('real', 'a, b, c, massimo'), OUT('"Inserisci tre numeri"'), IN('a'), IN('b'), IN('c'), AS('massimo', 'a'), IF('b > massimo', [AS('massimo', 'b')]), IF('c > massimo', [AS('massimo', 'c')]), OUT('"Il massimo è " + massimo')] },
-  { name: 'Conto alla rovescia (mentre)', main: [D('int', 'n'), OUT('"Da quanto parto? "', false), IN('n'), WH('n > 0', [OUT('n'), AS('n', 'n - 1')]), OUT('"Via!"')] },
-  { name: 'Tabellina (per)', main: [D('int', 'n'), OUT('"Quale tabellina? "', false), IN('n'), FOR('i', '1', '10', [OUT('n + " x " + i + " = " + n * i')])] },
+  { name: 'Conto alla rovescia (while)', main: [D('int', 'n'), OUT('"Da quanto parto? "', false), IN('n'), WH('n > 0', [OUT('n'), AS('n', 'n - 1')]), OUT('"Via!"')] },
+  { name: 'Tabellina (for)', main: [D('int', 'n'), OUT('"Quale tabellina? "', false), IN('n'), FOR('i', '1', '10', [OUT('n + " x " + i + " = " + n * i')])] },
   { name: 'Fattoriale', main: [D('int', 'n, f = 1'), OUT('"Inserisci n: "', false), IN('n'), FOR('i', '1', 'n', [AS('f', 'f * i')]), OUT('n + "! = " + f')] },
   { name: 'Media dei voti (vettore)', main: [D('int', 'n'), OUT('"Quanti voti? "', false), IN('n'), D('real', 'voti[n], somma = 0'), FOR('i', '0', 'n - 1', [OUT('"Voto " + (i + 1) + ": "', false), IN('voti[i]'), AS('somma', 'somma + voti[i]')]), OUT('"Media: " + somma / n')] },
-  { name: 'Indovina il numero (fai… mentre)', main: [CM('Il computer sceglie un numero da 1 a 100'), D('int', 'segreto = random(1, 100), tentativo, conta = 0'), DO([OUT('"Tentativo: "', false), IN('tentativo'), AS('conta', 'conta + 1'), IF('tentativo < segreto', [OUT('"Più grande!"')], [IF('tentativo > segreto', [OUT('"Più piccolo!"')])])], 'tentativo != segreto'), OUT('"Indovinato in " + conta + " tentativi!"')] }
+  { name: 'Indovina il numero (do while)', main: [CM('Il computer sceglie un numero da 1 a 100'), D('int', 'segreto = random(1, 100), tentativo, conta = 0'), DO([OUT('"Tentativo: "', false), IN('tentativo'), AS('conta', 'conta + 1'), IF('tentativo < segreto', [OUT('"Più grande!"')], [IF('tentativo > segreto', [OUT('"Più piccolo!"')])])], 'tentativo != segreto'), OUT('"Indovinato in " + conta + " tentativi!"')] }
 ];
 
 let prog;
