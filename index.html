@@ -196,12 +196,23 @@ dialog::backdrop{background:rgba(15,23,42,.35)}
 .toast button{border:0;background:rgba(255,255,255,.14);color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer;font-weight:600}
 .toast button:hover{background:rgba(255,255,255,.24)}
 
+/* pannello laterale ridimensionabile e richiudibile */
+.resizer{width:7px;margin:0 -4px 0 -3px;cursor:col-resize;flex:none;position:relative;z-index:5;transition:background .15s}
+.resizer:hover,.resizer.active,.resizer:focus-visible{background:rgba(79,70,229,.35);outline:none}
+body.resizing{cursor:col-resize;user-select:none}
+body.resizing #svg{pointer-events:none}
+body.side-collapsed #side,body.side-collapsed .resizer{display:none}
+.sideopen{position:absolute;top:12px;right:12px;display:none;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+body.side-collapsed .sideopen{display:inline-flex}
+.sideclose{margin-left:auto;align-self:center;color:var(--muted)}
+
 @media (max-width:1100px){ .btn .lbl{display:none} #progName{width:150px} }
 @media (max-width:860px){
   body{overflow:auto}
   main{flex-direction:column}
   #canvasWrap{min-height:60vh}
-  #side{width:auto;border-left:0;border-top:1px solid var(--line);min-height:70vh}
+  #side{width:auto !important;border-left:0;border-top:1px solid var(--line);min-height:70vh}
+  .resizer{display:none}
 }
 </style>
 </head>
@@ -252,12 +263,15 @@ dialog::backdrop{background:rgba(15,23,42,.35)}
       <button data-act="del" class="danger" title="Elimina (Canc)"><span data-icon="trash"></span></button>
     </div>
     <div id="palette" class="palette" role="menu"></div>
+    <button class="btn sideopen" id="sideOpen" title="Mostra il pannello (Ctrl+B)"><span data-icon="panelOpen"></span>Esecuzione e codice</button>
   </section>
 
+  <div id="sideResizer" class="resizer" role="separator" aria-orientation="vertical" aria-label="Larghezza del pannello" tabindex="0" title="Trascina per ridimensionare · doppio clic per nascondere"></div>
   <aside id="side">
     <div class="tabs">
       <button class="tab active" data-tab="run"><span data-icon="play"></span>Esecuzione</button>
       <button class="tab" data-tab="code"><span data-icon="code"></span>Codice</button>
+      <button class="btn ghost icon sideclose" id="sideClose" title="Nascondi il pannello (Ctrl+B)"><span data-icon="panelClose"></span></button>
     </div>
     <div class="tabpane active" id="pane-run">
       <div class="runbar">
@@ -356,6 +370,7 @@ dialog::backdrop{background:rgba(15,23,42,.35)}
       <tr><td><kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd></td><td>annulla / ripeti</td><td><kbd>Canc</kbd></td><td>elimina il blocco selezionato</td></tr>
       <tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd> / <kbd>X</kbd> / <kbd>V</kbd></td><td>copia / taglia / incolla dopo il blocco selezionato</td><td><kbd>Ctrl</kbd>+<kbd>D</kbd></td><td>duplica</td></tr>
       <tr><td><kbd>Ctrl</kbd>+<kbd>Invio</kbd></td><td>esegui</td><td><kbd>Ctrl</kbd>+<kbd>S</kbd> / <kbd>Ctrl</kbd>+<kbd>O</kbd></td><td>salva / apri file</td></tr>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>B</kbd></td><td>mostra / nascondi il pannello laterale</td><td></td><td></td></tr>
     </table>
   </div>
 </dialog>
@@ -407,7 +422,9 @@ const ICONS = {
   trash: '<path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M5 7l1 13h12l1-13"/><path d="M9 7V4h6v3"/>',
   code: '<path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/>',
   fit: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
-  paste: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>'
+  paste: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>',
+  panelClose: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/><path d="m8 10 2 2-2 2"/>',
+  panelOpen: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/><path d="m10 10-2 2 2 2"/>'
 };
 const icon = n => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[n]}</svg>`;
 
@@ -1707,6 +1724,55 @@ svg.addEventListener('wheel', e => {
 }, { passive: false });
 new ResizeObserver(() => positionOverlays()).observe(wrap);
 
+/* ---------- pannello laterale: ridimensionabile e richiudibile ---------- */
+const side = $('#side'), resizer = $('#sideResizer');
+const SIDE_MIN = 300, SIDE_SNAP = 180;
+const sideMax = () => Math.max(SIDE_MIN, Math.round(window.innerWidth * 0.6));
+function applySide() {
+  document.body.classList.toggle('side-collapsed', !!settings.sideCollapsed);
+  side.style.width = clamp(settings.sideWidth || 400, SIDE_MIN, sideMax()) + 'px';
+}
+function setSideCollapsed(v) { settings.sideCollapsed = v; saveSettings(); applySide(); }
+$('#sideClose').addEventListener('click', () => setSideCollapsed(true));
+$('#sideOpen').addEventListener('click', () => setSideCollapsed(false));
+resizer.addEventListener('dblclick', () => setSideCollapsed(true));
+resizer.addEventListener('pointerdown', e => {
+  if (e.button !== 0) return;
+  e.preventDefault();
+  try { resizer.setPointerCapture(e.pointerId); } catch (er) { /* puntatore non più attivo */ }
+  resizer.classList.add('active');
+  document.body.classList.add('resizing');
+  const startX = e.clientX, startW = side.getBoundingClientRect().width;
+  let raw = startW;
+  const move = ev => {
+    raw = startW + startX - ev.clientX;
+    side.style.width = clamp(raw, SIDE_MIN, sideMax()) + 'px';
+  };
+  const up = () => {
+    resizer.removeEventListener('pointermove', move);
+    resizer.removeEventListener('pointerup', up);
+    resizer.removeEventListener('pointercancel', up);
+    resizer.classList.remove('active');
+    document.body.classList.remove('resizing');
+    // trascinato quasi fino al bordo: il pannello si chiude e ricorda la larghezza precedente
+    if (raw < SIDE_SNAP) { settings.sideWidth = startW; setSideCollapsed(true); return; }
+    settings.sideWidth = clamp(raw, SIDE_MIN, sideMax());
+    saveSettings(); applySide();
+  };
+  resizer.addEventListener('pointermove', move);
+  resizer.addEventListener('pointerup', up);
+  resizer.addEventListener('pointercancel', up);
+});
+resizer.addEventListener('keydown', e => {
+  const d = e.key === 'ArrowLeft' ? 20 : e.key === 'ArrowRight' ? -20 : 0;
+  if (!d) return;
+  e.preventDefault();
+  settings.sideWidth = clamp(side.getBoundingClientRect().width + d, SIDE_MIN, sideMax());
+  saveSettings(); applySide();
+});
+window.addEventListener('resize', applySide);
+applySide();
+
 function subtreeIds(s, set = new Set()) { set.add(s.id); for (const k of CHILD_KEYS) if (s[k]) s[k].forEach(c => subtreeIds(c, set)); return set; }
 function startDrag(id, e) {
   const info = idx.get(id); if (!info) return;
@@ -1998,6 +2064,9 @@ function updateRunUI() {
 }
 function runStart(mode) {
   stopRun(null);
+  // la console deve essere visibile: riapre il pannello e passa alla scheda Esecuzione
+  if (settings.sideCollapsed) setSideCollapsed(false);
+  document.querySelector('.tab[data-tab="run"]').click();
   Run.errId = null; setMark(null, 'errmark');
   Con.clear();
   Run.interp = createInterp(clone(prog), { out: (t, nl) => Con.out(t, nl) });
@@ -2301,6 +2370,7 @@ document.addEventListener('keydown', e => {
   if (document.querySelector('dialog[open]')) return;
   if (ctrl && k === 's') { e.preventDefault(); saveFile(); return; }
   if (ctrl && k === 'o') { e.preventDefault(); $('#fileInput').click(); return; }
+  if (ctrl && k === 'b') { e.preventDefault(); setSideCollapsed(!settings.sideCollapsed); return; }
   if (ctrl && e.key === 'Enter') { e.preventDefault(); btnRun.click(); return; }
   const typing = e.target.closest && e.target.closest('input, textarea, select');
   if (typing) return;
