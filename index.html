@@ -106,10 +106,10 @@ main{flex:1;display:flex;min-height:0}
 .tabpane{display:none;flex:1;flex-direction:column;min-height:0;padding:10px;gap:10px}
 .tabpane.active{display:flex}
 .runbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.runbar .btn{padding:7px 12px}
-#btnRun{min-width:112px}
-.speed{display:flex;flex-direction:column;gap:2px;margin-left:auto;font-size:12px;color:var(--muted);min-width:110px}
-.speed input{width:110px;accent-color:var(--accent)}
+.runbar .btn{padding:7px 10px}
+#btnRun{min-width:100px}
+.speed{display:flex;flex-direction:column;gap:2px;margin-left:auto;font-size:12px;color:var(--muted);min-width:100px}
+.speed input{width:100px;accent-color:var(--accent)}
 .status{font-size:12.5px;color:var(--muted);padding:0 2px;min-height:18px}
 .status.err{color:var(--danger)}
 .box{border:1px solid var(--line);border-radius:10px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
@@ -117,6 +117,16 @@ main{flex:1;display:flex;min-height:0}
 .box h3 button{border:0;background:none;color:var(--muted);cursor:pointer;font-size:12px;text-transform:none;letter-spacing:0;padding:2px 6px;border-radius:5px}
 .box h3 button:hover{background:#eef0f5;color:var(--text)}
 .vars{flex:0 1 auto;max-height:38%}
+.freevars{flex-basis:100%;display:flex;align-items:center;gap:10px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:#fafbfd;cursor:pointer;font-size:13px;user-select:none;transition:background .15s,border-color .15s}
+.freevars:hover{border-color:var(--line2)}
+.freevars:has(input:checked){border-color:#c7c4f7;background:var(--accent-soft)}
+.freevars input{appearance:none;-webkit-appearance:none;width:32px;height:18px;border-radius:9px;background:#cfd4df;position:relative;flex:none;margin:0;cursor:pointer;transition:background .15s}
+.freevars input::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+.freevars input:checked{background:var(--accent)}
+.freevars input:checked::after{transform:translateX(14px)}
+.freevars input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.freevars small{color:var(--muted);font-size:12px}
+#vars td.t.dyn{font-style:italic}
 #vars{overflow:auto}
 #vars table{width:100%;border-collapse:collapse;font-size:13px}
 #vars th{text-align:left;font-weight:600;color:var(--muted);font-size:11.5px;padding:5px 10px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff}
@@ -279,6 +289,7 @@ body.side-collapsed .sideopen{display:inline-flex}
         <button class="btn" id="btnStep" title="Esegui un blocco alla volta"><span data-icon="step"></span>Passo</button>
         <button class="btn" id="btnStop" title="Ferma l'esecuzione" disabled><span data-icon="stop"></span>Stop</button>
         <label class="speed">Velocità: <b id="speedLbl"></b><input type="range" id="speed" min="0" max="4" step="1"></label>
+        <label class="freevars" title="Se attivo, i blocchi Assegna e Leggi creano da soli le variabili non dichiarate. Il loro tipo non è vincolante: può cambiare a ogni assegnazione. Vale per questo programma e viene salvato nel file."><input type="checkbox" id="optFreeVars"><span><b>Usa senza Dichiara</b> <small>· variabili create da Assegna e Leggi</small></span></label>
       </div>
       <div id="runStatus" class="status">Pronto</div>
       <section class="box vars"><h3>Variabili</h3><div id="vars"></div></section>
@@ -343,7 +354,8 @@ body.side-collapsed .sideopen{display:inline-flex}
       <tr><td><b>For</b></td><td>Ciclo con contatore: da… a… (estremo incluso), con passo anche negativo.</td></tr>
     </table>
     <h3>Tipi</h3>
-    <p style="margin:4px 0"><b>Intero</b> (5), <b>Reale</b> (3.14), <b>Stringa</b> ("ciao"), <b>Booleano</b> (true/false). Attenzione: come in C/C++/Java, <code>Intero / Intero</code> dà un risultato intero (7 / 2 = 3). Per avere 3.5 usa <code>real(7) / 2</code> oppure <code>7.0 / 2</code>.</p>
+    <p style="margin:4px 0"><b>Intero</b> (5), <b>Reale</b> (3.14), <b>Stringa</b> ("ciao"), <b>Booleano</b> (true/false). La divisione tra numeri interi dipende dalla variabile che riceve il risultato: in una variabile <b>Intero</b> <code>7 / 2</code> vale 3, in una <b>Reale</b> vale 3.5 (e <code>22 / 100</code> vale 0.22). Scritta direttamente con <b>Scrivi</b> o usata in una condizione dà il risultato con la virgola. Il resto si calcola con <code>7 % 2</code> = 1.</p>
+    <p style="margin:4px 0"><b>Usa senza Dichiara</b> (interruttore sotto i pulsanti Esegui e Passo): i blocchi <b>Assegna</b> e <b>Leggi</b> creano da soli le variabili non dichiarate. Il loro tipo non è vincolante: prende quello del valore e può cambiare (con Leggi, un numero diventa Intero o Reale, il resto Stringa). I vettori vanno comunque dichiarati. L'opzione viene salvata nel file del programma.</p>
     <h3>Funzioni disponibili</h3>
     <table>
       <tr><td><code>sqrt(x)</code></td><td>radice quadrata</td><td><code>pow(b, e)</code></td><td>potenza b<sup>e</sup></td></tr>
@@ -671,6 +683,13 @@ function coerce(val, t, what) {
 function parseInput(raw, t) {
   const s = raw.trim();
   if (t === 'string') return { ok: true, v: raw };
+  // variabile libera: numero se possibile, altrimenti testo
+  if (t === 'any') {
+    if (/^[+-]?\d+$/.test(s)) return { ok: true, t: 'int', v: parseInt(s, 10) };
+    const x = s.replace(',', '.');
+    if (/^[+-]?(\d+\.\d*|\.\d+)$/.test(x)) return { ok: true, t: 'real', v: parseFloat(x) };
+    return { ok: true, t: 'string', v: raw };
+  }
   if (t === 'int') {
     if (/^[+-]?\d+$/.test(s)) return { ok: true, v: parseInt(s, 10) };
     return { ok: false, msg: `"${raw}" non è un numero intero. Riprova.` };
@@ -718,9 +737,13 @@ const BUILTINS = {
 
 function createInterp(program, io) {
   const env = new Map();
+  // variabili libere: Assegna e Leggi creano le variabili mancanti, con tipo non vincolante (dyn)
+  const free = !!program.freeVars;
   const getVar = name => {
     const e = env.get(name);
-    if (!e) rerr(`La variabile '${name}' non è stata dichiarata. Aggiungi un blocco "Dichiara" prima di usarla.`);
+    if (!e) rerr(free
+      ? `La variabile '${name}' non esiste ancora: assegnale un valore (o leggila) prima di usarla.`
+      : `La variabile '${name}' non è stata dichiarata. Aggiungi un blocco "Dichiara" prima di usarla.`);
     return e;
   };
   const showVal = v => v.t === 'string' ? `"${v.v}"` : fmt(v);
@@ -731,7 +754,8 @@ function createInterp(program, io) {
     if (i.v < 0 || i.v >= n) rerr(`Indice ${i.v} fuori dai limiti: ${name} ha ${n} elementi (indici da 0 a ${n - 1})`);
     return i.v;
   }
-  function ev(n) {
+  // want: tipo della variabile che riceverà il risultato (decide la divisione tra interi)
+  function ev(n, want) {
     switch (n.k) {
       case 'num': return { t: n.real ? 'real' : 'int', v: n.v };
       case 'str': return { t: 'string', v: n.v };
@@ -756,12 +780,12 @@ function createInterp(program, io) {
         rerr(`'${name}' non è un vettore: non puoi usare ${name}[...]`);
       }
       case 'un': {
-        const a = ev(n.e);
+        const a = ev(n.e, n.op === '-' ? want : undefined);
         if (n.op === '-') { if (!isNum(a.t)) rerr(`Il segno meno non si può usare con un valore ${TYPES[a.t]}`); return { t: a.t, v: -a.v }; }
         if (a.t !== 'bool') rerr(`L'operatore 'not' (!) si usa con valori vero/falso, non con ${TYPES[a.t]}`);
         return { t: 'bool', v: !a.v };
       }
-      case 'bin': return evBin(n);
+      case 'bin': return evBin(n, want);
       case 'call': {
         const B = BUILTINS[n.name];
         if (!B) {
@@ -775,7 +799,7 @@ function createInterp(program, io) {
     }
     rerr('Espressione non valida');
   }
-  function evBin(n) {
+  function evBin(n, want) {
     const op = n.op;
     if (op === '&&' || op === '||') {
       const a = ev(n.l);
@@ -786,17 +810,20 @@ function createInterp(program, io) {
       if (b.t !== 'bool') rerr(`'${op === '&&' ? 'and' : 'or'}' si usa tra condizioni vero/falso, ma a destra c'è un valore ${TYPES[b.t]}`);
       return b;
     }
-    const a = ev(n.l), b = ev(n.r);
+    const arith = '+-*/%'.includes(op);
+    const a = ev(n.l, arith ? want : undefined), b = ev(n.r, arith ? want : undefined);
     if (op === '+' && (a.t === 'string' || b.t === 'string')) return { t: 'string', v: fmt(a) + fmt(b) };
     if ('+-*/%'.includes(op)) {
       if (!isNum(a.t) || !isNum(b.t)) rerr(`L'operatore '${op}' non si può usare tra ${TYPES[a.t]} e ${TYPES[b.t]}`);
-      const t = a.t === 'real' || b.t === 'real' ? 'real' : 'int';
+      let t = a.t === 'real' || b.t === 'real' ? 'real' : 'int';
       let v;
       switch (op) {
         case '+': v = a.v + b.v; break;
         case '-': v = a.v - b.v; break;
         case '*': v = a.v * b.v; break;
-        case '/': if (b.v === 0) rerr('Divisione per zero'); v = t === 'int' ? Math.trunc(a.v / b.v) : a.v / b.v; break;
+        // divisione sempre "vera" (22 / 100 = 0.22); tra interi resta Intero solo se il risultato è esatto (6 / 2 = 3)
+        // tra interi: divisione intera se il risultato va in un Intero (7 / 2 = 3), altrimenti con la virgola (3.5)
+        case '/': if (b.v === 0) rerr('Divisione per zero'); v = a.v / b.v; if (t === 'int') { if (want === 'int') v = Math.trunc(v); else if (!Number.isInteger(v)) t = 'real'; } break;
         case '%': if (b.v === 0) rerr('Divisione per zero (nel calcolo del resto %)'); v = a.v % b.v; break;
       }
       if (!isFinite(v)) rerr('Il risultato è troppo grande');
@@ -821,10 +848,10 @@ function createInterp(program, io) {
     }
     return { t: 'bool', v: r };
   }
-  function E(src) {
+  function E(src, want) {
     let ast;
     try { ast = parseExpr(src); } catch (e) { rerr('Errore di scrittura: ' + e.message); }
-    return ev(ast);
+    return ev(ast, want);
   }
   function cond(src) {
     const v = E(src);
@@ -835,11 +862,17 @@ function createInterp(program, io) {
     let ast;
     try { ast = parseTarget(src); } catch (e) { rerr('Errore di scrittura: ' + e.message); }
     if (ast.k === 'var') {
-      const e = getVar(ast.name);
-      if (e.arr) rerr(`'${ast.name}' è un vettore: specifica la posizione, ad esempio ${ast.name}[0]`);
-      return { t: e.t, name: ast.name, set(v) { e.v = coerce(v, e.t, `nella variabile '${ast.name}'`); } };
+      const name = ast.name;
+      // variabile libera: viene creata alla prima assegnazione e prende il tipo del valore
+      if (free && !env.has(name)) return { t: 'any', name, set(v) { env.set(name, { t: v.t, v: v.v, dyn: true }); } };
+      const e = getVar(name);
+      if (e.arr) rerr(`'${name}' è un vettore: specifica la posizione, ad esempio ${name}[0]`);
+      if (e.dyn) return { t: 'any', name, set(v) { e.t = v.t; e.v = v.v; } };
+      return { t: e.t, name, set(v) { e.v = coerce(v, e.t, `nella variabile '${name}'`); } };
     }
-    const name = ast.obj.name, e = getVar(name);
+    const name = ast.obj.name;
+    if (free && !env.has(name)) rerr(`Il vettore '${name}' non esiste: i vettori vanno sempre creati con un blocco "Dichiara", ad esempio ${name}[10]`);
+    const e = getVar(name);
     if (!e.arr) rerr(`'${name}' non è un vettore: non puoi scrivere in ${name}[...]`);
     const i = index(e, ast);
     return { t: e.t, name: `${name}[${i}]`, set(v) { e.vals[i] = coerce(v, e.t, `nell'elemento ${name}[${i}]`); } };
@@ -855,7 +888,7 @@ function createInterp(program, io) {
         try { items = parseDecl(s.vars); } catch (e) { rerr('Errore di scrittura: ' + e.message); }
         for (const it of items) {
           const old = env.get(it.name);
-          if (old && (old.t !== s.vtype || !!old.arr !== !!it.size)) rerr(`La variabile '${it.name}' è già stata dichiarata come ${TYPES[old.t]}${old.arr ? ' (vettore)' : ''}`);
+          if (old && !old.dyn && (old.t !== s.vtype || !!old.arr !== !!it.size)) rerr(`La variabile '${it.name}' è già stata dichiarata come ${TYPES[old.t]}${old.arr ? ' (vettore)' : ''}`);
           if (it.size) {
             const n = ev(it.size);
             if (n.t !== 'int') rerr(`La dimensione del vettore ${it.name} deve essere un numero intero`);
@@ -863,20 +896,20 @@ function createInterp(program, io) {
             env.set(it.name, { t: s.vtype, arr: true, vals: new Array(n.v).fill(undefined) });
           } else {
             const e = { t: s.vtype, v: undefined };
-            if (it.init) e.v = coerce(ev(it.init), s.vtype, `nella variabile '${it.name}'`);
+            if (it.init) e.v = coerce(ev(it.init, s.vtype), s.vtype, `nella variabile '${it.name}'`);
             env.set(it.name, e);
           }
         }
         break;
       }
-      case 'assign': { yield step; const lv = lval(s.target); lv.set(E(s.expr)); break; }
+      case 'assign': { yield step; const lv = lval(s.target); lv.set(E(s.expr, lv.t)); break; }
       case 'input': {
         yield step;
         const lv = lval(s.target);
         for (;;) {
           const raw = yield { k: 'input', target: lv.name, vtype: lv.t };
           const r = parseInput(raw, lv.t);
-          if (r.ok) { lv.set({ t: lv.t, v: r.v }); break; }
+          if (r.ok) { lv.set({ t: r.t || lv.t, v: r.v }); break; }
           yield { k: 'warn', msg: r.msg };
         }
         break;
@@ -895,7 +928,7 @@ function createInterp(program, io) {
           return e;
         };
         let e = loopVar();
-        e.v = coerce(E(s.from), e.t, `nella variabile '${s.var}'`);
+        e.v = coerce(E(s.from, e.t), e.t, `nella variabile '${s.var}'`);
         const stepSrc = s.step && s.step.trim() ? s.step : '1';
         const getStep = () => {
           const st = E(stepSrc);
@@ -1170,6 +1203,11 @@ function varTypes(program) {
     }
     if (s.type === 'for' && s.var && !vt.has(s.var)) vt.set(s.var, { t: 'int', auto: true });
   });
+  // variabili libere: create da Assegna e Leggi, di tipo non noto in anticipo
+  if (program.freeVars) walkAll(program.main, s => {
+    if (s.type !== 'assign' && s.type !== 'input') return;
+    try { const a = parseTarget(s.target); if (a.k === 'var' && !vt.has(a.name)) vt.set(a.name, { t: 'any', free: true }); } catch (e) { /* destinazione non valida */ }
+  });
   return vt;
 }
 function inferType(n, vt) {
@@ -1184,6 +1222,8 @@ function inferType(n, vt) {
       if (BIN_PREC[n.op] <= 4) return 'bool';
       const a = inferType(n.l, vt), b = inferType(n.r, vt);
       if (n.op === '+' && (a === 'string' || b === 'string')) return 'string';
+      if (a === 'any' || b === 'any') return 'any';
+      if (n.op === '/') return 'real';
       return a === 'real' || b === 'real' ? 'real' : 'int';
     }
     case 'call':
@@ -1199,13 +1239,14 @@ function inferType(n, vt) {
 const realLit = v => { const s = String(v); return /[.eE]/.test(s) ? s : s + '.0'; };
 
 /* restituisce [testo, precedenza] — precedenza 10 = atomico */
-function genExprP(src, lang, vt) {
+function genExprP(src, lang, vt, want) {
   let ast;
   if (typeof src === 'string') { try { ast = parseExpr(src); } catch (e) { return [src, 10]; } } else ast = src;
   const js = lang === 'js';
   const T = n => inferType(n, vt);
   const W = (pair, need) => pair[1] < need ? `(${pair[0]})` : pair[0];
-  function g(n) {
+  // want: tipo della variabile che riceve il risultato, come nel simulatore
+  function g(n, want) {
     switch (n.k) {
       case 'num': return [n.real ? realLit(n.v) : String(n.v), 10];
       case 'str': return [JSON.stringify(n.v), 10];
@@ -1213,15 +1254,16 @@ function genExprP(src, lang, vt) {
       case 'var': return [n.name, 10];
       case 'idx': return [`${n.obj.name}[${g(n.index)[0]}]`, 10];
       case 'un': {
-        const e = g(n.e);
+        const e = g(n.e, n.op === '-' ? want : undefined);
         if (n.op === '-') { const s = W(e, 8); return ['-' + (s.startsWith('-') ? `(${s})` : s), 8]; }
         return [(js ? '!' : 'NOT ') + W(e, 8), 8];
       }
       case 'bin': {
         const P = BIN_PREC[n.op];
-        const l = g(n.l), r = g(n.r);
-        // Intero / Intero dà un intero, come in C e Java
-        if (js && n.op === '/' && T(n.l) === 'int' && T(n.r) === 'int') return [`Math.trunc(${W(l, 6)} / ${W(r, 7)})`, 10];
+        const sub = '+-*/%'.includes(n.op) ? want : undefined;
+        const l = g(n.l, sub), r = g(n.r, sub);
+        // tra interi, con risultato in un Intero: divisione intera
+        if (js && n.op === '/' && want === 'int' && T(n.l) === 'int' && T(n.r) === 'int') return [`Math.trunc(${W(l, 6)} / ${W(r, 7)})`, 10];
         const op = js ? ({ '==': '===', '!=': '!==' }[n.op] || n.op)
           : ({ '&&': 'AND', '||': 'OR', '==': '=', '!=': '≠', '<=': '≤', '>=': '≥', '%': 'MOD' }[n.op] || n.op);
         return [`${W(l, P)} ${op} ${W(r, P + 1)}`, P];
@@ -1244,13 +1286,13 @@ function genExprP(src, lang, vt) {
     }
     return ['?', 10];
   }
-  return g(ast);
+  return g(ast, want);
 }
 
 function generateCode(program, lang) {
   const js = lang === 'js';
   const vt = varTypes(program);
-  const X = src => genExprP(src, lang, vt)[0];
+  const X = (src, want) => genExprP(src, lang, vt, want)[0];
   const lines = [];
   const emit = (ind, s) => lines.push('    '.repeat(ind) + s);
   const decl = s => { try { return parseDecl(s.vars); } catch (e) { return null; } };
@@ -1273,7 +1315,13 @@ function generateCode(program, lang) {
     });
   })(program.main);
   const PARSE_IN = { int: 'parseInt(%)', real: 'parseFloat(%)', string: '%', bool: '% === "vero"' };
-  const jsInput = (target, msg) => `${X(target)} = ${PARSE_IN[targetType(target)].replace('%', `prompt(${msg})`)};`;
+  let usesRead = false;
+  const jsInput = (target, msg) => {
+    const t = targetType(target);
+    if (t === 'any') { usesRead = true; return `${X(target)} = leggi(${msg});`; }
+    return `${X(target)} = ${PARSE_IN[t].replace('%', `prompt(${msg})`)};`;
+  };
+  const freeNames = [...vt].filter(([, i]) => i.free).map(([n]) => n);
 
   function block(list, ind) {
     for (let i = 0; i < list.length; i++) {
@@ -1291,11 +1339,11 @@ function generateCode(program, lang) {
         if (!items) { emit(ind, `// ERRORE nella dichiarazione: ${TYPES[s.vtype]} ${s.vars.map(declRowText).join(', ')}`); return; }
         for (const it of items) {
           if (it.size) emit(ind, `let ${it.name} = new Array(${X(it.size)});  // vettore di ${TYPES[s.vtype]}`);
-          else emit(ind, `let ${it.name}${it.init ? ' = ' + X(it.init) : ''};  // ${TYPES[s.vtype]}`);
+          else emit(ind, `let ${it.name}${it.init ? ' = ' + X(it.init, s.vtype) : ''};  // ${TYPES[s.vtype]}`);
         }
         return;
       }
-      case 'assign': emit(ind, `${X(s.target)} = ${X(s.expr)};`); return;
+      case 'assign': emit(ind, `${X(s.target)} = ${X(s.expr, targetType(s.target))};`); return;
       case 'input': emit(ind, jsInput(s.target, JSON.stringify('Inserisci ' + s.target))); return;
       case 'output': {
         if (!usesLine) { emit(ind, `console.log(${X(s.expr)});`); return; }
@@ -1354,6 +1402,8 @@ function generateCode(program, lang) {
   if (js) {
     block(program.main, 0);
     const head = [`// ${title}`, '// Da eseguire nella console del browser (F12): prompt() legge i dati, console.log() li scrive', ''];
+    if (usesRead) head.push('// legge un valore: numero se possibile, altrimenti testo', 'function leggi(messaggio) {', '    const s = prompt(messaggio);', '    return s !== null && s.trim() !== "" && !isNaN(s) ? Number(s) : s;', '}', '');
+    if (freeNames.length) head.push(`let ${freeNames.join(', ')};  // variabili create senza Dichiara`, '');
     if (usesLine) head.push('let riga = "";  // testo scritto senza andare a capo', '');
     const tail = usesLine ? ['if (riga !== "") console.log(riga);'] : [];
     return [...head, ...lines, ...tail].join('\n');
@@ -1434,7 +1484,7 @@ function normalizeList(list) {
     return n;
   });
 }
-const mkProgram = (name, main) => ({ format: 'flowlab', version: 1, name, main: normalizeList(main) });
+const mkProgram = (name, main, freeVars = false) => ({ format: 'flowlab', version: 1, name, freeVars: !!freeVars, main: normalizeList(main) });
 
 let prog;
 let idx = new Map();
@@ -1450,7 +1500,7 @@ if (!['js', 'ps'].includes(settings.lang)) settings.lang = 'js';
 try { const c = JSON.parse(LS.get(CLIP_KEY)); if (c && BINFO[c.type]) clip = normalizeList([c])[0]; } catch (e) { /* nessun appunto */ }
 try {
   const saved = JSON.parse(LS.get(STORE_KEY));
-  prog = saved && Array.isArray(saved.main) ? mkProgram(String(saved.name || 'Nuovo programma'), saved.main) : mkProgram('Nuovo programma', []);
+  prog = saved && Array.isArray(saved.main) ? mkProgram(String(saved.name || 'Nuovo programma'), saved.main, saved.freeVars) : mkProgram('Nuovo programma', []);
 } catch (e) { prog = mkProgram('Nuovo programma', []); }
 
 /* ---------- elementi DOM ---------- */
@@ -1497,6 +1547,7 @@ function applyMarks() {
 function save() { LS.set(STORE_KEY, JSON.stringify(prog)); }
 function changed() {
   buildIndex(); render(); save(); updateCode(); updateUndoUI();
+  $('#optFreeVars').checked = !!prog.freeVars;
 }
 function commit(fn) {
   stopRun('Esecuzione interrotta: il diagramma è stato modificato.');
@@ -2117,12 +2168,13 @@ function showCurrent() {
 function onInput(y) {
   Run.state = 'input';
   showCurrent();
-  setStatus(`Scrivi un valore per ${y.target} (${TYPES[y.vtype]}) nella console e premi Invio`);
+  const typeHint = y.vtype === 'any' ? '' : ` (${TYPES[y.vtype]})`;
+  setStatus(`Scrivi un valore per ${y.target}${typeHint} nella console e premi Invio`);
   const line = Con.line || Con.newLine();
   Con.line = null;
   const inp = document.createElement('input');
   inp.className = 'conin';
-  inp.placeholder = `${y.target} (${TYPES[y.vtype]}) + Invio`;
+  inp.placeholder = `${y.target}${typeHint} + Invio`;
   inp.spellcheck = false;
   line.appendChild(inp);
   Con.scroll();
@@ -2197,7 +2249,7 @@ function renderVars() {
     const key = e.arr ? JSON.stringify(e.vals) : String(e.v);
     now.set(name, key);
     const chg = Run.state !== 'running' || delay() > 0 ? Run.prev.get(name) !== key : false;
-    html += `<tr class="${chg ? 'chg' : ''}"><td><b>${esc(name)}</b></td><td class="t">${TYPES[e.t]}${e.arr ? ` [${e.vals.length}]` : ''}</td><td class="v">${val}</td></tr>`;
+    html += `<tr class="${chg ? 'chg' : ''}"><td><b>${esc(name)}</b></td><td class="t${e.dyn ? ' dyn' : ''}"${e.dyn ? ' title="Creata senza Dichiara: il tipo può cambiare"' : ''}>${TYPES[e.t]}${e.arr ? ` [${e.vals.length}]` : ''}</td><td class="v">${val}</td></tr>`;
   }
   Run.prev = now;
   box.innerHTML = html + '</tbody></table>';
@@ -2313,6 +2365,13 @@ $('#menuExport').addEventListener('click', async e => {
   if (b.dataset.exp === 'svg') download(new Blob([exportSVG().svg], { type: 'image/svg+xml' }), fileBase() + '.svg');
   else { try { download(await exportPNG(), fileBase() + '.png'); } catch (er) { toast('Non è stato possibile creare l\'immagine'); } }
 });
+const optFreeVars = $('#optFreeVars');
+optFreeVars.checked = !!prog.freeVars;
+optFreeVars.addEventListener('change', () => {
+  const on = optFreeVars.checked;
+  commit(() => { prog.freeVars = on; });
+  toast(on ? 'Assegna e Leggi ora creano le variabili non dichiarate' : 'Le variabili vanno di nuovo dichiarate con Dichiara');
+});
 const optMono = $('#optMono');
 optMono.checked = settings.mono;
 optMono.addEventListener('change', () => { settings.mono = optMono.checked; saveSettings(); toast(settings.mono ? 'Le immagini saranno in bianco e nero' : 'Le immagini saranno a colori'); });
@@ -2332,7 +2391,7 @@ function openFile(file) {
     try {
       const data = JSON.parse(fr.result);
       if (!data || !Array.isArray(data.main)) throw new Error('formato');
-      loadProgram(mkProgram(String(data.name || file.name.replace(/\.(flowlab|json)$/i, '')), data.main), `Aperto "${data.name || file.name}"`);
+      loadProgram(mkProgram(String(data.name || file.name.replace(/\.(flowlab|json)$/i, '')), data.main, data.freeVars), `Aperto "${data.name || file.name}"`);
     } catch (e) { toast('Questo file non è un programma FlowLab valido'); }
   };
   fr.readAsText(file);
