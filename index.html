@@ -236,7 +236,7 @@ body.side-collapsed .sideopen{display:inline-flex}
   <input id="progName" type="text" spellcheck="false" aria-label="Nome del programma" title="Nome del programma">
   <div class="sep"></div>
   <button class="btn" id="btnNew" title="Nuovo programma"><span data-icon="new"></span><span class="lbl">Nuovo</span></button>
-  <button class="btn" id="btnOpen" title="Apri un programma salvato (Ctrl+O)"><span data-icon="open"></span><span class="lbl">Apri</span></button>
+  <button class="btn" id="btnOpen" title="Apri un programma salvato (.flowlab) o un’immagine scaricata da FlowLab (Ctrl+O)"><span data-icon="open"></span><span class="lbl">Apri</span></button>
   <button class="btn" id="btnSave" title="Salva il programma sul computer (Ctrl+S)"><span data-icon="save"></span><span class="lbl">Salva</span></button>
   <div class="sep"></div>
   <button class="btn icon" id="btnUndo" title="Annulla (Ctrl+Z)"><span data-icon="undo"></span></button>
@@ -375,7 +375,7 @@ body.side-collapsed .sideopen{display:inline-flex}
       <li>Il lavoro viene salvato automaticamente in questo browser. Con <b>Salva</b> scarichi un file <code>.flowlab</code> da riaprire con <b>Apri</b> (o trascinandolo nella pagina).</li>
       <li><b>Copia immagine</b> mette il diagramma negli appunti: incollalo con <kbd>Ctrl</kbd>+<kbd>V</kbd> in Word, Classroom, e-mail…</li>
       <li><b>Copia sorgente</b> mette negli appunti il contenuto del file <code>.flowlab</code> (testo JSON).</li>
-      <li><b>Scarica</b> salva l'immagine PNG o SVG. L'opzione <b>Bianco e nero</b> è comoda per le verifiche stampate.</li>
+      <li><b>Scarica</b> salva l'immagine PNG o SVG. L'opzione <b>Bianco e nero</b> è comoda per le verifiche stampate. L'immagine scaricata contiene anche il diagramma: riaprila con <b>Apri</b> (o trascinandola nella pagina) per modificarlo.</li>
     </ul>
     <h3>Scorciatoie</h3>
     <table>
@@ -387,7 +387,7 @@ body.side-collapsed .sideopen{display:inline-flex}
   </div>
 </dialog>
 
-<input type="file" id="fileInput" accept=".flowlab,.json" hidden>
+<input type="file" id="fileInput" accept=".flowlab,.json,.png,.svg" hidden>
 <div id="toast" class="toast"><span id="toastMsg"></span><button id="toastBtn" hidden></button></div>
 
 <script>
@@ -2320,11 +2320,67 @@ function download(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(a.href), 4000);
 }
 const fileBase = () => (prog.name || 'diagramma').replace(/[\\/:*?"<>|]+/g, '').trim() || 'diagramma';
+/* ---------- sorgente del programma dentro le immagini esportate ----------
+   PNG: blocco di testo iTXt "flowlab" · SVG: <metadata id="flowlab-source"> in base64.
+   Così un'immagine scaricata da FlowLab si può riaprire con "Apri" e modificare. */
+const IMG_KEY = 'flowlab';
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; }
+  return t;
+})();
+function crc32(bytes) { let c = 0xFFFFFFFF; for (const b of bytes) c = CRC_TABLE[(c ^ b) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function b64encode(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+const b64decode = b64 => new TextDecoder().decode(Uint8Array.from(atob(b64), c => c.charCodeAt(0)));
+async function pngWithSource(blob, text) {
+  const png = new Uint8Array(await blob.arrayBuffer());
+  const enc = new TextEncoder();
+  // iTXt: parola chiave \0, non compresso, metodo 0, lingua vuota \0, traduzione vuota \0, testo UTF-8
+  const key = enc.encode(IMG_KEY), body = enc.encode(text);
+  const data = new Uint8Array(key.length + 5 + body.length);
+  data.set(key, 0); data.set(body, key.length + 5);
+  const chunk = new Uint8Array(12 + data.length), dv = new DataView(chunk.buffer);
+  dv.setUint32(0, data.length);
+  chunk.set(enc.encode('iTXt'), 4);
+  chunk.set(data, 8);
+  dv.setUint32(8 + data.length, crc32(chunk.subarray(4, 8 + data.length)));
+  const iend = png.length - 12; // il blocco finale IEND occupa sempre gli ultimi 12 byte
+  return new Blob([png.subarray(0, iend), chunk, png.subarray(iend)], { type: 'image/png' });
+}
+function sourceFromPng(buf) {
+  const b = new Uint8Array(buf), dv = new DataView(buf), dec = new TextDecoder();
+  if (b.length < 8 || b[0] !== 0x89 || b[1] !== 0x50 || b[2] !== 0x4E || b[3] !== 0x47) return null;
+  for (let p = 8; p + 8 <= b.length;) {
+    const len = dv.getUint32(p), type = dec.decode(b.subarray(p + 4, p + 8));
+    if (type === 'iTXt' || type === 'tEXt') {
+      const d = b.subarray(p + 8, p + 8 + len), z = d.indexOf(0);
+      if (z > 0 && dec.decode(d.subarray(0, z)) === IMG_KEY) {
+        if (type === 'tEXt') return dec.decode(d.subarray(z + 1));
+        if (d[z + 1] !== 0) return null; // testo compresso: non lo scriviamo mai
+        let q = d.indexOf(0, z + 3) + 1; // salta la lingua
+        q = d.indexOf(0, q) + 1;         // salta la parola chiave tradotta
+        return dec.decode(d.subarray(q));
+      }
+    }
+    if (type === 'IEND') break;
+    p += 12 + len;
+  }
+  return null;
+}
+function sourceFromSvg(text) {
+  const m = text.match(/<metadata id="flowlab-source">([A-Za-z0-9+/=\s]*)<\/metadata>/);
+  return m ? b64decode(m[1].replace(/\s+/g, '')) : null;
+}
 function exportSVG() {
   const L = layoutProgram(prog, { interactive: false, mono: settings.mono });
   const M = 24, b = L.bounds;
   const w = Math.ceil(b.w + 2 * M), h = Math.ceil(b.h + 2 * M);
-  const s = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><rect width="${w}" height="${h}" fill="#ffffff"/><g transform="translate(${M - b.x},${M - b.y})">${L.svg}</g></svg>`;
+  const s = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><metadata id="flowlab-source">${b64encode(JSON.stringify(prog))}</metadata><rect width="${w}" height="${h}" fill="#ffffff"/><g transform="translate(${M - b.x},${M - b.y})">${L.svg}</g></svg>`;
   return { svg: s, w, h };
 }
 async function exportPNG() {
@@ -2339,7 +2395,8 @@ async function exportPNG() {
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
   ctx.scale(scale, scale);
   ctx.drawImage(img, 0, 0);
-  return new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('PNG non generato')), 'image/png'));
+  const blob = await new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('PNG non generato')), 'image/png'));
+  return pngWithSource(blob, JSON.stringify(prog));
 }
 async function copyImage() {
   if (navigator.clipboard && window.ClipboardItem && window.isSecureContext) {
@@ -2385,16 +2442,18 @@ $('#btnCopySrc').addEventListener('click', async () => {
   const ok = await copyText(sourceText());
   toast(ok ? 'Sorgente copiato negli appunti ✓' : 'Impossibile copiare il sorgente');
 });
-function openFile(file) {
-  const fr = new FileReader();
-  fr.onload = () => {
-    try {
-      const data = JSON.parse(fr.result);
-      if (!data || !Array.isArray(data.main)) throw new Error('formato');
-      loadProgram(mkProgram(String(data.name || file.name.replace(/\.(flowlab|json)$/i, '')), data.main, data.freeVars), `Aperto "${data.name || file.name}"`);
-    } catch (e) { toast('Questo file non è un programma FlowLab valido'); }
-  };
-  fr.readAsText(file);
+// apre un .flowlab/.json oppure un'immagine PNG/SVG scaricata da FlowLab (che contiene il sorgente)
+async function openFile(file) {
+  const isPng = /\.png$/i.test(file.name) || file.type === 'image/png';
+  const isSvg = /\.svg$/i.test(file.name) || file.type === 'image/svg+xml';
+  try {
+    const text = isPng ? sourceFromPng(await file.arrayBuffer()) : isSvg ? sourceFromSvg(await file.text()) : await file.text();
+    if (!text) { toast('Questa immagine non contiene un diagramma FlowLab: va scaricata da FlowLab con "Scarica"'); return; }
+    const data = JSON.parse(text);
+    if (!data || !Array.isArray(data.main)) throw new Error('formato');
+    const name = String(data.name || file.name.replace(/\.(flowlab|json|png|svg)$/i, ''));
+    loadProgram(mkProgram(name, data.main, data.freeVars), `Aperto "${name}"`);
+  } catch (e) { toast('Questo file non è un programma FlowLab valido'); }
 }
 $('#btnSave').addEventListener('click', saveFile);
 $('#btnOpen').addEventListener('click', () => $('#fileInput').click());
