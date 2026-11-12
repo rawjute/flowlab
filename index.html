@@ -104,6 +104,9 @@ main{flex:1;display:flex;min-height:0}
 .tab svg{width:15px;height:15px}
 .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 .tabpane{display:none;flex:1;flex-direction:column;min-height:0;padding:10px;gap:10px}
+.tab.has::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent);margin-left:1px}
+#notesText{flex:1;min-height:0;resize:none;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font:inherit;font-size:14.5px;line-height:1.6;color:var(--text);background:#fff;outline:none}
+#notesText:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,70,229,.12)}
 .tabpane.active{display:flex}
 .runbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .runbar .btn{padding:7px 10px}
@@ -279,6 +282,7 @@ body.side-collapsed .sideopen{display:inline-flex}
   <div id="sideResizer" class="resizer" role="separator" aria-orientation="vertical" aria-label="Larghezza del pannello" tabindex="0" title="Trascina per ridimensionare · doppio clic per nascondere"></div>
   <aside id="side">
     <div class="tabs">
+      <button class="tab" data-tab="notes" title="Traccia dell'esercizio o appunti"><span data-icon="notes"></span>Traccia</button>
       <button class="tab active" data-tab="run"><span data-icon="play"></span>Esecuzione</button>
       <button class="tab" data-tab="code"><span data-icon="code"></span>Codice</button>
       <button class="btn ghost icon sideclose" id="sideClose" title="Nascondi il pannello (Ctrl+B)"><span data-icon="panelClose"></span></button>
@@ -289,11 +293,14 @@ body.side-collapsed .sideopen{display:inline-flex}
         <button class="btn" id="btnStep" title="Esegui un blocco alla volta"><span data-icon="step"></span>Passo</button>
         <button class="btn" id="btnStop" title="Ferma l'esecuzione" disabled><span data-icon="stop"></span>Stop</button>
         <label class="speed">Velocità: <b id="speedLbl"></b><input type="range" id="speed" min="0" max="4" step="1"></label>
-        <label class="freevars" title="Se attivo, i blocchi Assegna e Leggi creano da soli le variabili non dichiarate. Il loro tipo non è vincolante: può cambiare a ogni assegnazione. Vale per questo programma e viene salvato nel file."><input type="checkbox" id="optFreeVars"><span><b>Usa senza Dichiara</b> <small>· variabili create da Assegna e Leggi</small></span></label>
+        <label class="freevars" title="Se attivo, i blocchi Assegna e Input creano da soli le variabili non dichiarate. Il loro tipo non è vincolante: può cambiare a ogni assegnazione. Vale per questo programma e viene salvato nel file."><input type="checkbox" id="optFreeVars"><span><b>Usa senza Dichiara</b> <small>· variabili create da Assegna e Input</small></span></label>
       </div>
       <div id="runStatus" class="status">Pronto</div>
       <section class="box vars"><h3>Variabili</h3><div id="vars"></div></section>
       <section class="box consolebox" id="consoleBox"><h3>Console <button id="btnClear" title="Pulisci la console">Pulisci</button></h3><div id="console"></div></section>
+    </div>
+    <div class="tabpane" id="pane-notes">
+      <textarea id="notesText" spellcheck="true" aria-label="Traccia dell'esercizio o appunti" placeholder="Scrivi qui la traccia dell'esercizio o i tuoi appunti.&#10;&#10;Il testo viene salvato insieme al programma: nel file .flowlab, in Copia sorgente e nelle immagini scaricate."></textarea>
     </div>
     <div class="tabpane" id="pane-code">
       <div class="codebar">
@@ -347,15 +354,15 @@ body.side-collapsed .sideopen{display:inline-flex}
     <table>
       <tr><td><b>Dichiara</b></td><td>Crea variabili dello stesso tipo: per ognuna scrivi il nome e, se vuoi, il valore iniziale; con <b>+ Aggiungi variabile</b> ne aggiungi un'altra. Vettore: nome <code>v[10]</code> (indici da 0 a 9), anche <code>v[n]</code>.</td></tr>
       <tr><td><b>Assegna</b></td><td>Calcola un valore e lo salva nella variabile: <code>x = a + b</code>.</td></tr>
-      <tr><td><b>Leggi / Scrivi</b></td><td>Input da tastiera / output sulla console. Per unire testo e numeri usa <code>+</code>: <code>"Somma: " + s</code>.</td></tr>
+      <tr><td><b>Input / Output</b></td><td>Lettura da tastiera / scrittura sulla console. Per unire testo e numeri usa <code>+</code>: <code>"Somma: " + s</code>.</td></tr>
       <tr><td><b>Se</b></td><td>Selezione: ramo <b>V</b> se la condizione è vera, ramo <b>F</b> altrimenti.</td></tr>
       <tr><td><b>While</b></td><td>Ciclo con controllo in testa: ripete finché la condizione è vera.</td></tr>
       <tr><td><b>Do while</b></td><td>Ciclo con controllo in coda: il corpo viene eseguito almeno una volta.</td></tr>
       <tr><td><b>For</b></td><td>Ciclo con contatore: da… a… (estremo incluso), con passo anche negativo.</td></tr>
     </table>
     <h3>Tipi</h3>
-    <p style="margin:4px 0"><b>Intero</b> (5), <b>Reale</b> (3.14), <b>Stringa</b> ("ciao"), <b>Booleano</b> (true/false). La divisione tra numeri interi dipende dalla variabile che riceve il risultato: in una variabile <b>Intero</b> <code>7 / 2</code> vale 3, in una <b>Reale</b> vale 3.5 (e <code>22 / 100</code> vale 0.22). Scritta direttamente con <b>Scrivi</b> o usata in una condizione dà il risultato con la virgola. Il resto si calcola con <code>7 % 2</code> = 1.</p>
-    <p style="margin:4px 0"><b>Usa senza Dichiara</b> (interruttore sotto i pulsanti Esegui e Passo): i blocchi <b>Assegna</b> e <b>Leggi</b> creano da soli le variabili non dichiarate. Il loro tipo non è vincolante: prende quello del valore e può cambiare (con Leggi, un numero diventa Intero o Reale, il resto Stringa). I vettori vanno comunque dichiarati. L'opzione viene salvata nel file del programma.</p>
+    <p style="margin:4px 0"><b>Intero</b> (5), <b>Reale</b> (3.14), <b>Stringa</b> ("ciao"), <b>Booleano</b> (true/false). La divisione tra numeri interi dipende dalla variabile che riceve il risultato: in una variabile <b>Intero</b> <code>7 / 2</code> vale 3, in una <b>Reale</b> vale 3.5 (e <code>22 / 100</code> vale 0.22). Scritta direttamente con <b>Output</b> o usata in una condizione dà il risultato con la virgola. Il resto si calcola con <code>7 % 2</code> = 1.</p>
+    <p style="margin:4px 0"><b>Usa senza Dichiara</b> (interruttore sotto i pulsanti Esegui e Passo): i blocchi <b>Assegna</b> e <b>Input</b> creano da soli le variabili non dichiarate. Il loro tipo non è vincolante: prende quello del valore e può cambiare (con Input, un numero diventa Intero o Reale, il resto Stringa). I vettori vanno comunque dichiarati. L'opzione viene salvata nel file del programma.</p>
     <h3>Funzioni disponibili</h3>
     <table>
       <tr><td><code>sqrt(x)</code></td><td>radice quadrata</td><td><code>pow(b, e)</code></td><td>potenza b<sup>e</sup></td></tr>
@@ -374,6 +381,7 @@ body.side-collapsed .sideopen{display:inline-flex}
     <ul>
       <li>Il lavoro viene salvato automaticamente in questo browser. Con <b>Salva</b> scarichi un file <code>.flowlab</code> da riaprire con <b>Apri</b> (o trascinandolo nella pagina).</li>
       <li><b>Copia immagine</b> mette il diagramma negli appunti: incollalo con <kbd>Ctrl</kbd>+<kbd>V</kbd> in Word, Classroom, e-mail…</li>
+      <li>Nella scheda <b>Traccia</b> del pannello laterale puoi scrivere la consegna dell'esercizio o degli appunti: il testo viene salvato insieme al programma e, quando apri un file che ne contiene uno, la scheda si apre da sola.</li>
       <li><b>Copia sorgente</b> mette negli appunti il contenuto del file <code>.flowlab</code> (testo JSON).</li>
       <li><b>Scarica</b> salva l'immagine PNG o SVG. L'opzione <b>Bianco e nero</b> è comoda per le verifiche stampate. L'immagine scaricata contiene anche il diagramma: riaprila con <b>Apri</b> (o trascinandola nella pagina) per modificarlo.</li>
     </ul>
@@ -433,6 +441,7 @@ const ICONS = {
   cut: '<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.1 15.9M14.5 14.5 20 20M8.1 8.1 12 12"/>',
   trash: '<path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M5 7l1 13h12l1-13"/><path d="M9 7V4h6v3"/>',
   code: '<path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/>',
+  notes: '<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/><path d="M8 13h8M8 17h5"/>',
   fit: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
   paste: '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>',
   panelClose: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/><path d="m8 10 2 2-2 2"/>',
@@ -737,7 +746,7 @@ const BUILTINS = {
 
 function createInterp(program, io) {
   const env = new Map();
-  // variabili libere: Assegna e Leggi creano le variabili mancanti, con tipo non vincolante (dyn)
+  // variabili libere: Assegna e Input creano le variabili mancanti, con tipo non vincolante (dyn)
   const free = !!program.freeVars;
   const getVar = name => {
     const e = env.get(name);
@@ -983,8 +992,8 @@ function labelParts(s) {
   switch (s.type) {
     case 'declare': return [{ t: TYPES[s.vtype] + ' ', b: 1 }, { t: s.vars.map(declRowText).join(', ') }];
     case 'assign': return [{ t: s.target }, { t: ' = ' }, { t: s.expr }];
-    case 'input': return [{ t: 'Leggi ', b: 1 }, { t: s.target }];
-    case 'output': return [{ t: 'Scrivi ', b: 1 }, { t: s.expr }];
+    case 'input': return [{ t: 'Input ', b: 1 }, { t: s.target }];
+    case 'output': return [{ t: 'Output ', b: 1 }, { t: s.expr }];
     case 'for': {
       const p = [{ t: 'for ', b: 1 }, { t: s.var }, { t: ' da ', b: 1 }, { t: s.from }, { t: ' a ', b: 1 }, { t: s.to }];
       if (s.step && s.step.trim() !== '1') p.push({ t: ' passo ', b: 1 }, { t: s.step });
@@ -1203,7 +1212,7 @@ function varTypes(program) {
     }
     if (s.type === 'for' && s.var && !vt.has(s.var)) vt.set(s.var, { t: 'int', auto: true });
   });
-  // variabili libere: create da Assegna e Leggi, di tipo non noto in anticipo
+  // variabili libere: create da Assegna e Input, di tipo non noto in anticipo
   if (program.freeVars) walkAll(program.main, s => {
     if (s.type !== 'assign' && s.type !== 'input') return;
     try { const a = parseTarget(s.target); if (a.k === 'var' && !vt.has(a.name)) vt.set(a.name, { t: 'any', free: true }); } catch (e) { /* destinazione non valida */ }
@@ -1304,9 +1313,9 @@ function generateCode(program, lang) {
     return { src, lit, neg: lit !== null && lit < 0 };
   };
   const targetType = src => { try { return inferType(parseTarget(src), vt); } catch (e) { return 'string'; } };
-  // "Scrivi" senza a capo seguito da "Leggi" diventa il messaggio di prompt()
+  // "Output" senza a capo seguito da "Input" diventa il messaggio di prompt()
   const mergesWithInput = (list, i) => list[i].type === 'output' && list[i].newline === false && list[i + 1] && list[i + 1].type === 'input';
-  // gli altri "Scrivi" senza a capo si accumulano nella variabile riga
+  // gli altri "Output" senza a capo si accumulano nella variabile riga
   let usesLine = false;
   if (js) (function scan(list) {
     list.forEach((s, i) => {
@@ -1428,8 +1437,8 @@ function highlight(code, lang) {
 const BLOCKS = [
   { type: 'declare', name: 'Dichiara', d: 'Crea variabili', desc: 'Crea una o più variabili di un certo tipo.' },
   { type: 'assign', name: 'Assegna', d: 'x = valore', desc: 'Calcola un valore e lo mette in una variabile.' },
-  { type: 'input', name: 'Leggi', d: 'Input da tastiera', desc: "Chiede all'utente un valore e lo salva nella variabile." },
-  { type: 'output', name: 'Scrivi', d: 'Output a video', desc: 'Mostra un messaggio o un valore sulla console.' },
+  { type: 'input', name: 'Input', d: 'Lettura da tastiera', desc: "Chiede all'utente un valore e lo salva nella variabile." },
+  { type: 'output', name: 'Output', d: 'Scrittura a video', desc: 'Mostra un messaggio o un valore sulla console.' },
   { type: 'if', name: 'Se', d: 'Selezione (if)', desc: 'Se la condizione è vera esegue il ramo V, altrimenti il ramo F.' },
   { type: 'while', name: 'While', d: 'Controllo in testa', desc: 'Ripete i blocchi finché la condizione è vera (controllo in testa).' },
   { type: 'dowhile', name: 'Do while', d: 'Controllo in coda', desc: 'Esegue i blocchi e li ripete finché la condizione è vera (controllo in coda).' },
@@ -1484,7 +1493,7 @@ function normalizeList(list) {
     return n;
   });
 }
-const mkProgram = (name, main, freeVars = false) => ({ format: 'flowlab', version: 1, name, freeVars: !!freeVars, main: normalizeList(main) });
+const mkProgram = (name, main, freeVars = false, notes = '') => ({ format: 'flowlab', version: 1, name, notes: String(notes ?? ''), freeVars: !!freeVars, main: normalizeList(main) });
 
 let prog;
 let idx = new Map();
@@ -1500,7 +1509,7 @@ if (!['js', 'ps'].includes(settings.lang)) settings.lang = 'js';
 try { const c = JSON.parse(LS.get(CLIP_KEY)); if (c && BINFO[c.type]) clip = normalizeList([c])[0]; } catch (e) { /* nessun appunto */ }
 try {
   const saved = JSON.parse(LS.get(STORE_KEY));
-  prog = saved && Array.isArray(saved.main) ? mkProgram(String(saved.name || 'Nuovo programma'), saved.main, saved.freeVars) : mkProgram('Nuovo programma', []);
+  prog = saved && Array.isArray(saved.main) ? mkProgram(String(saved.name || 'Nuovo programma'), saved.main, saved.freeVars, saved.notes) : mkProgram('Nuovo programma', []);
 } catch (e) { prog = mkProgram('Nuovo programma', []); }
 
 /* ---------- elementi DOM ---------- */
@@ -1548,6 +1557,7 @@ function save() { LS.set(STORE_KEY, JSON.stringify(prog)); }
 function changed() {
   buildIndex(); render(); save(); updateCode(); updateUndoUI();
   $('#optFreeVars').checked = !!prog.freeVars;
+  syncNotes();
 }
 function commit(fn) {
   stopRun('Esecuzione interrotta: il diagramma è stato modificato.');
@@ -2117,7 +2127,7 @@ function runStart(mode) {
   stopRun(null);
   // la console deve essere visibile: riapre il pannello e passa alla scheda Esecuzione
   if (settings.sideCollapsed) setSideCollapsed(false);
-  document.querySelector('.tab[data-tab="run"]').click();
+  showTab('run');
   Run.errId = null; setMark(null, 'errmark');
   Con.clear();
   Run.interp = createInterp(clone(prog), { out: (t, nl) => Con.out(t, nl) });
@@ -2287,11 +2297,34 @@ function updateCode() {
   $('#codeOut').innerHTML = highlight(code, settings.lang);
   document.querySelectorAll('#langSeg button').forEach(b => b.classList.toggle('active', b.dataset.lang === settings.lang));
 }
-document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
-  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === t));
-  document.querySelectorAll('.tabpane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + t.dataset.tab));
+function showTab(name) {
+  if (settings.sideCollapsed) setSideCollapsed(false);
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x.dataset.tab === name));
+  document.querySelectorAll('.tabpane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + name));
   updateCode();
-}));
+}
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => showTab(t.dataset.tab)));
+
+/* ---------- traccia / appunti: testo libero salvato nel programma ---------- */
+const notesEl = $('#notesText');
+let notesBefore = null;
+function syncNotes() {
+  if (document.activeElement !== notesEl) notesEl.value = prog.notes || '';
+  document.querySelector('.tab[data-tab="notes"]').classList.toggle('has', !!(prog.notes || '').trim());
+}
+notesEl.addEventListener('focus', () => { notesBefore = JSON.stringify(prog); });
+notesEl.addEventListener('input', () => { prog.notes = notesEl.value; save(); syncNotes(); });
+// alla fine della modifica (uscendo dal riquadro) la traccia entra nella cronologia di Annulla
+notesEl.addEventListener('change', () => {
+  if (notesBefore && notesBefore !== JSON.stringify(prog)) {
+    undoStack.push(notesBefore);
+    if (undoStack.length > 200) undoStack.shift();
+    redoStack.length = 0;
+    updateUndoUI();
+  }
+  notesBefore = JSON.stringify(prog);
+});
+syncNotes();
 $('#langSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; settings.lang = b.dataset.lang; saveSettings(); updateCode(); });
 async function copyText(text) {
   try { await navigator.clipboard.writeText(text); return true; } catch (e) {
@@ -2427,7 +2460,7 @@ optFreeVars.checked = !!prog.freeVars;
 optFreeVars.addEventListener('change', () => {
   const on = optFreeVars.checked;
   commit(() => { prog.freeVars = on; });
-  toast(on ? 'Assegna e Leggi ora creano le variabili non dichiarate' : 'Le variabili vanno di nuovo dichiarate con Dichiara');
+  toast(on ? 'Assegna e Input ora creano le variabili non dichiarate' : 'Le variabili vanno di nuovo dichiarate con Dichiara');
 });
 const optMono = $('#optMono');
 optMono.checked = settings.mono;
@@ -2452,7 +2485,8 @@ async function openFile(file) {
     const data = JSON.parse(text);
     if (!data || !Array.isArray(data.main)) throw new Error('formato');
     const name = String(data.name || file.name.replace(/\.(flowlab|json|png|svg)$/i, ''));
-    loadProgram(mkProgram(name, data.main, data.freeVars), `Aperto "${name}"`);
+    loadProgram(mkProgram(name, data.main, data.freeVars, data.notes), `Aperto "${name}"`);
+    if (prog.notes.trim()) showTab('notes'); // c'è una traccia: la mostra subito
   } catch (e) { toast('Questo file non è un programma FlowLab valido'); }
 }
 $('#btnSave').addEventListener('click', saveFile);
